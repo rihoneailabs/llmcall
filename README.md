@@ -14,7 +14,9 @@ As AI becomes more prevalent in software development, there's a growing need for
 pip install llmcall
 ```
 
-## Usage
+## Example Usage
+
+### Generation
 
 ```python
 from llmcall import generate, generate_decision
@@ -28,7 +30,7 @@ class ResponseSchema(BaseModel):
     story: str
     tags: list[str]
     
-response = generate("Create a story...", output_schema=schema)
+response: ResponseSchema = generate("Create a story...", output_schema=schema)
 
 # Decision making
 decision = generate_decision(
@@ -37,11 +39,26 @@ decision = generate_decision(
 )
 ```
 
+### Extraction
+
+```python
+from llmcall import extract
+from pydantic import BaseModel
+
+class ResponseSchema(BaseModel):
+    email_subject: str
+    email_body: str
+    email_topic: str
+    email_sentiment: str
+
+response: ResponseSchema = extract(text=<some-email-text>, output_schema=ResponseSchema)
+```
+
 ## Configuration
 
 Set environment variables:
 - LLMCALL_API_KEY: Your API key
-- LLMCALL_MODEL: Model to use (default: gpt-4)
+- LLMCALL_MODEL: Model to use (default: gpt-4o-mini)
 
 
 ## Features
@@ -53,4 +70,4 @@ Set environment variables:
 
 ## Documentation
 
-Please refer to our comprehensive [documentation](https://llmcall.readthedocs.io/en/latest/) to learn more about this tool.
+Please refer to our comprehensive [documentation](https://llmcall.github.io/en/latest/) to learn more about this tool.
