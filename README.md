@@ -1,6 +1,12 @@
-# llmcall
+# LLMCall
 
-A simple abstraction layer for LLM calls.
+A lite abstraction layer for LLM calls.
+
+## Motivation
+
+As AI becomes more prevalent in software development, there's a growing need for simple and intuitive APIs for interacting with AI for quick text generation, decision making, and more. This is especially important now that we have structured outputs, which allow us to seamlessly integrate AI into our application flow.
+
+`llmcall` provides a minimal, batteries-included interface for common LLM operations without unnecessary complexity.
 
 ## Installation
 
@@ -12,18 +18,16 @@ pip install llmcall
 
 ```python
 from llmcall import generate, generate_decision
+from pydantic import BaseModel
 
 # Basic generation
 response = generate("Write a story about...")
 
 # Structured generation
-schema = {
-    "type": "object",
-    "properties": {
-        "title": {"type": "string"},
-        "summary": {"type": "string"}
-    }
-}
+class ResponseSchema(BaseModel):
+    story: str
+    tags: list[str]
+    
 response = generate("Create a story...", output_schema=schema)
 
 # Decision making
@@ -38,3 +42,15 @@ decision = generate_decision(
 Set environment variables:
 - LLMCALL_API_KEY: Your API key
 - LLMCALL_MODEL: Model to use (default: gpt-4)
+
+
+## Features
+
+- [x] Simple API for generating unstructured text
+- [x] Structured output generation using `Pydantic`
+- [x] Decision making
+- [ ] Custom model selection
+
+## Documentation
+
+Please refer to our comprehensive [documentation](https://llmcall.readthedocs.io/en/latest/) to learn more about this tool.

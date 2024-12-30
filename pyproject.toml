@@ -1,13 +1,25 @@
 [tool.poetry]
 name = "llmcall"
 version = "0.1.0"
-description = "A simple abstraction layer for LLM calls"
-authors = ["Your Name <your.email@example.com>"]
-license = "MIT"
+description = "A lite abstraction layer for LLM calls"
+authors = ["Ndamulelo Nemakhavhani <info@rihonegroup.com>"]
+license = "Apache-2.0"
 readme = "README.md"
+keywords = ["llm", "ai", "litellm", "structure-outputs", "openai", "pydantic"]
+repository = ""
+homepage = ""
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.11, <4.0"
 litellm = "^1.56.4"
 pydantic = ">=2.0.0"
 pydantic-settings = ">=2.0.0"
