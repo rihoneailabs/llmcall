@@ -22,9 +22,11 @@ class Decision(BaseModel):
 
 
 def generate(
-    prompt: str,
-    output_schema: BaseModel = None,
-    instructions: Optional[str] = None,
+    prompt: Annotated[str, "The user prompt which tells the model what to generate."],
+    output_schema: Annotated[
+        Optional[BaseModel], "The Pydantic model to use for response structure validation(optional)"
+    ] = None,
+    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
 ) -> Union[str, BaseModel]:
     """Generate content using configured LLM."""
 
@@ -67,9 +69,9 @@ def generate(
 
 
 def generate_decision(
-    prompt: str,
-    options: list[str],
-    instructions: Optional[str] = None,
+    prompt: Annotated[str, "The context to consider when making the decision."],
+    options: Annotated[list[str], "List of options to choose from."],
+    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
 ) -> Decision:
     """Generate a decision from a list of options."""
 
