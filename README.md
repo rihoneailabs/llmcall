@@ -61,12 +61,16 @@ Set environment variables:
 - LLMCALL_MODEL: Model to use (default: `openai/gpt-4o-2024-08-06`)
 
 
-## Features
+## Roadmap
 
 - [x] Simple API for generating unstructured text
 - [x] Structured output generation using `Pydantic`
 - [x] Decision making
 - [x] Custom model selection (via `LiteLLM` - See [documentation](https://docs.litellm.ai/docs/providers))
+- [x] Structured text extraction
+- [ ] Structured text extraction from PDF, Docx, etc.
+- [ ] Structured text extraction from Images
+- [ ] Structured text extraction from Websites
 
 ## Documentation
 
