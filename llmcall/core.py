@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ModelConfig(BaseSettings):
@@ -12,13 +12,14 @@ class ModelConfig(BaseSettings):
 
 
 class LLMConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        case_sensitive=False,
+        env_prefix="LLMCALL_",
+    )
     api_key: str
-    model: str = "openai/gpt-4o-mini"
+    model: str = "openai/gpt-4o-2024-08-06"
+    debug: bool = False
     llm: ModelConfig = ModelConfig()
-
-    class Config:
-        env_prefix = "LLMCALL_"
-        case_sensitive = False
 
 
 config = LLMConfig()
