@@ -22,20 +22,20 @@ pip install llmcall
 from llmcall import generate, generate_decision
 from pydantic import BaseModel
 
-# Basic generation
-response = generate("Write a story about...")
+# i. Basic generation
+response = generate("Write a story about a fictional holiday to the sun.")
 
-# Structured generation
+# ii. Structured generation
 class ResponseSchema(BaseModel):
     story: str
     tags: list[str]
     
-response: ResponseSchema = generate("Create a story...", output_schema=schema)
+response: ResponseSchema = generate("Create a rare story about the history of civilisation.", output_schema=schema)
 
-# Decision making
+# iii. Decision making
 decision = generate_decision(
-    "Should the character be good or evil?",
-    options=["good", "evil"]
+    "Which is bigger?",
+    options=["apple", "berry", "pumpkin"]
 )
 ```
 
@@ -51,7 +51,13 @@ class ResponseSchema(BaseModel):
     email_topic: str
     email_sentiment: str
 
-response: ResponseSchema = extract(text=<some-email-text>, output_schema=ResponseSchema)
+text = """To whom it may concern,
+
+Request for Admission at Harvard University
+
+I write to plead with the admission board to consider my application for the 2022/2023 academic year. I am a dedicated student with a passion for computer science and a strong desire to make a difference in the world. I believe that Harvard University is the perfect place for me to achieve my dreams and make a positive impact on society."""
+
+response: ResponseSchema = extract(text=text, output_schema=ResponseSchema)
 ```
 
 ## Configuration
@@ -60,6 +66,7 @@ Set environment variables:
 - LLMCALL_API_KEY: Your API key
 - LLMCALL_MODEL: Model to use (default: `openai/gpt-4o-2024-08-06`)
 
+> **Note**: We recommend using `Open AI` as the model provider due to their robust support for structured outputs. You can use other providers by setting the `LLMCALL_MODEL` or changing the [config](./llmcall/core.py) directly. Any model supported by `LiteLLM` can be used.
 
 ## Roadmap
 
