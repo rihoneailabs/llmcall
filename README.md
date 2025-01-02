@@ -58,7 +58,7 @@ response: ResponseSchema = extract(text=<some-email-text>, output_schema=Respons
 
 Set environment variables:
 - LLMCALL_API_KEY: Your API key
-- LLMCALL_MODEL: Model to use (default: gpt-4o-mini)
+- LLMCALL_MODEL: Model to use (default: `openai/gpt-4o-2024-08-06`)
 
 
 ## Features
@@ -66,8 +66,8 @@ Set environment variables:
 - [x] Simple API for generating unstructured text
 - [x] Structured output generation using `Pydantic`
 - [x] Decision making
-- [ ] Custom model selection
+- [x] Custom model selection (via `LiteLLM` - See [documentation](https://docs.litellm.ai/docs/providers))
 
 ## Documentation
 
-Please refer to our comprehensive [documentation](https://llmcall.github.io/en/latest/) to learn more about this tool.
+Please refer to our comprehensive [documentation](./docs/index.md) to learn more about this tool.
