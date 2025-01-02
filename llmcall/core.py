@@ -1,16 +1,24 @@
-from typing import Any, List, Optional, Union
-from pydantic import BaseModel
+from typing import Optional
 from pydantic_settings import BaseSettings
-from litellm import completion
+
+
+class ModelConfig(BaseSettings):
+    temperature: float = 0.2
+    stream: bool = False
+    n: Optional[int] = 1
+    max_tokens: int = 1024
+    num_retries: int = 3
+    seed: Optional[int] = 47
+
 
 class LLMConfig(BaseSettings):
     api_key: str
-    model: str = "gpt-4o-mini"
-    temperature: float = 0.2
-    max_tokens: int = 1024
+    model: str = "openai/gpt-4o-mini"
+    llm: ModelConfig = ModelConfig()
 
     class Config:
         env_prefix = "LLMCALL_"
-        
-config = LLMConfig()
+        case_sensitive = False
 
+
+config = LLMConfig()
