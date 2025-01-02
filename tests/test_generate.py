@@ -1,6 +1,6 @@
 import os
 from typing import Annotated
-from llmcall import generate
+from llmcall import generate, generate_decision
 
 from pydantic import BaseModel
 
@@ -21,3 +21,12 @@ def test_generate_one_word_answer_exact():
     prompt = "What is the capital of France?"
     response = generate(prompt, output_schema=ResponseFormat)
     assert response.name.lower() == "paris"
+
+
+def test_simple_decision():
+    prompt = "Which is bigger?"
+    options = ["apple", "pumpkin", "nut"]
+    decision = generate_decision(prompt, options)
+    print("Pytest decision:", decision)
+    assert decision.selection.lower() == "pumpkin"
+    

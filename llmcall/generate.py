@@ -2,6 +2,7 @@ import json
 import logging
 import time
 from typing import Optional, Union
+from typing_extensions import Annotated
 
 import litellm
 from litellm import completion
@@ -14,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 class Decision(BaseModel):
-    value: str
+    selection: Annotated[str, "The selected option - MUST be one of the provided options."]
     prompt: Optional[str] = None
     options: Optional[list[str]] = None
     reason: Optional[str] = None
@@ -56,7 +57,7 @@ def generate(
     _logger.debug(f"Generated content in {time.perf_counter() - start:.2f}s")
 
     if output_schema:
-        return output_schema.model_validate(json.loads(response.choices[0].message.content))
+        return output_schema.model_validate(json.loads(response.choices[0].message.content), strict=True)
 
     return response.choices[0].message.content
 
@@ -108,4 +109,4 @@ def generate_decision(
     )
 
     _logger.debug(f"Generated decision in {time.perf_counter() - start:.2f}s")
-    return Decision.model_validate(json.loads(response.choices[0].message.content))
+    return Decision.model_validate(json.loads(response.choices[0].message.content), strict=True)

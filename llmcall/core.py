@@ -15,6 +15,7 @@ class LLMConfig(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_prefix="LLMCALL_",
+        extra="ignore",
     )
     api_key: str
     model: str = "openai/gpt-4o-2024-08-06"
