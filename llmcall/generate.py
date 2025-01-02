@@ -27,6 +27,10 @@ def generate(
     instructions: Optional[str] = None,
 ) -> Union[str, BaseModel]:
     """Generate content using configured LLM."""
+
+    if not prompt:
+        raise ValueError("Prompt cannot be empty.")
+
     DEFAULT_SYSTEM_PROMPT = "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
 
@@ -68,6 +72,9 @@ def generate_decision(
     instructions: Optional[str] = None,
 ) -> Decision:
     """Generate a decision from a list of options."""
+
+    if not prompt:
+        raise ValueError("Prompt cannot be empty.")
 
     DEFAULT_SYSTEM_PROMPT = """You are a specialized computer algorithm designed to make decisions in Control Flow scenarios. \
         Your task is to analyze the given context and options, then select the most appropriate option based on the context. Here is the context you need to consider: \

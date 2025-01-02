@@ -25,12 +25,15 @@ pydantic-settings = ">=2.0.0"
 openai = "^1.58.1"
 litellm = "^1.56.4"
 environs = "^11.2.1"
+tenacity = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
 black = "^24.10.0"
 isort = "^5.13.2"
 mypy = "^1.14.0"
+tox = "^4.23.2"
+pytest-cov = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
