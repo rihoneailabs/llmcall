@@ -93,6 +93,10 @@ def generate_decision(
     if instructions:
         messages = [
             {
+                "content": instructions,
+                "role": "system",
+            },
+            {
                 "content": "Pick one of the following options: <options>{options}</options>, given the following query:\n<query>{prompt}</query>.",
                 "role": "user",
             },
