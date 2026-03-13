@@ -1,6 +1,8 @@
 from typing import Optional
-from llmcall import extract
+
 from pydantic import BaseModel
+
+from llmcall import extract
 
 
 def test_extract_from_unstructured_text():
