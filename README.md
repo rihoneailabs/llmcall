@@ -125,22 +125,67 @@ story, decision = await asyncio.gather(
 ### Extraction
 
 ```python
-from llmcall import extract
+from llmcall import extract, extract_pdf, extract_image
 from pydantic import BaseModel
 
-class ResponseSchema(BaseModel):
+class EmailSchema(BaseModel):
     email_subject: str
     email_body: str
     email_topic: str
     email_sentiment: str
 
-text = """To whom it may concern,
+# i. Extract from plain text
+text = """To whom it may concern, Request for Admission at Harvard University ..."""
+result: EmailSchema = extract(text=text, output_schema=EmailSchema)
 
-Request for Admission at Harvard University
+# ii. Extract from a PDF — URL, local path, or raw bytes all work
+class InvoiceSchema(BaseModel):
+    vendor: str
+    total: float
+    line_items: list[str]
 
-I write to plead with the admission board to consider my application for the 2022/2023 academic year. I am a dedicated student with a passion for computer science and a strong desire to make a difference in the world. I believe that Harvard University is the perfect place for me to achieve my dreams and make a positive impact on society."""
+result: InvoiceSchema = extract_pdf(
+    source="https://example.com/invoice.pdf",
+    output_schema=InvoiceSchema,
+)
+# local file
+result: InvoiceSchema = extract_pdf(source="/path/to/invoice.pdf", output_schema=InvoiceSchema)
+# raw bytes
+with open("invoice.pdf", "rb") as f:
+    result: InvoiceSchema = extract_pdf(source=f.read(), output_schema=InvoiceSchema)
 
-response: ResponseSchema = extract(text=text, output_schema=ResponseSchema)
+# iii. Extract from an image — URL, local path, or raw bytes all work
+class ReceiptSchema(BaseModel):
+    store: str
+    total: float
+    items: list[str]
+
+result: ReceiptSchema = extract_image(
+    source="https://example.com/receipt.jpg",
+    output_schema=ReceiptSchema,
+)
+# local PNG (MIME type auto-detected from extension)
+result: ReceiptSchema = extract_image(source="/path/to/receipt.png", output_schema=ReceiptSchema)
+# raw bytes with explicit MIME type
+with open("receipt.webp", "rb") as f:
+    result: ReceiptSchema = extract_image(source=f.read(), output_schema=ReceiptSchema, media_type="image/webp")
+```
+
+> **Model requirements:** PDF extraction requires a model with document-understanding support
+> (e.g. `anthropic/claude-3-5-sonnet-20241022`, `openai/gpt-4o`, `google/gemini-1.5-pro`).
+> Image extraction requires a vision-capable model. An informative `ValueError` is raised if
+> the configured model does not support the required capability.
+
+### Async multimodal extraction
+
+```python
+from llmcall import aextract_pdf, aextract_image
+import asyncio
+
+invoice, receipt = await asyncio.gather(
+    aextract_pdf("https://example.com/invoice.pdf", InvoiceSchema),
+    aextract_image("https://example.com/receipt.jpg", ReceiptSchema),
+)
 ```
 
 ## Roadmap
@@ -151,10 +196,10 @@ response: ResponseSchema = extract(text=text, output_schema=ResponseSchema)
 - [x] Custom model selection (via `LiteLLM` - See [documentation](https://docs.litellm.ai/docs/providers))
 - [x] Custom base URL for OpenAI-compatible endpoints (Ollama, Azure, LM Studio)
 - [x] Structured text extraction
-- [ ] Structured text extraction from PDF, Docx, etc.
-- [ ] Structured text extraction from Images
+- [x] Structured extraction from PDF (URL, local path, or bytes)
+- [x] Structured extraction from Images (URL, local path, or bytes)
 - [ ] Structured text extraction from Websites
-- [x] Async support (`agenerate`, `aextract`, `agenerate_decision`)
+- [x] Async support (`agenerate`, `aextract`, `aextract_pdf`, `aextract_image`, `agenerate_decision`)
 - [x] Streaming support (`generate(..., stream=True)`, `agenerate(..., stream=True)`)
 
 ## Documentation
