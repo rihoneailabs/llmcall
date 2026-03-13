@@ -75,8 +75,9 @@ Set environment variables:
 - [x] Decision making
 - [x] Custom model selection (via `LiteLLM` - See [documentation](https://docs.litellm.ai/docs/providers))
 - [x] Structured text extraction
-- [ ] Structured text extraction from PDF, Docx, etc.
+- [ ] Structured text extraction from PDF files
 - [ ] Structured text extraction from Images
+- [ ] Structured text extraction from Office Docs e.g. Docx, Powerpoint etc.
 - [ ] Structured text extraction from Websites
 
 ## Documentation
