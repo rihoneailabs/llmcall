@@ -7,7 +7,7 @@ from typing_extensions import Annotated
 from litellm import completion
 from pydantic import BaseModel
 
-from llmcall.core import config
+from llmcall.core import get_config
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +26,9 @@ def extract(
 
     if not text:
         raise ValueError("Text cannot be empty.")
-    
+
+    cfg = get_config()
+
     start = time.perf_counter()
     _logger.info(f"Extracting information from text: {text[:50]}")
 
@@ -41,11 +43,17 @@ def extract(
         ]
 
     response = completion(
-        api_key=config.api_key,
-        model=config.model,
+        api_key=cfg.api_key,
+        model=cfg.model,
+        base_url=cfg.base_url,
         messages=messages,
         response_format=output_schema,
-        **config.llm.model_dump(),
+        temperature=cfg.llm.temperature,
+        stream=cfg.llm.stream,
+        n=cfg.llm.n,
+        max_tokens=cfg.llm.max_tokens,
+        num_retries=cfg.llm.num_retries,
+        seed=cfg.llm.seed,
     )
 
     _logger.info(f"Extraction completed in {time.perf_counter() - start:.2f} seconds.")
