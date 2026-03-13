@@ -83,13 +83,43 @@ response: ResponseSchema = generate(
     output_schema=ResponseSchema,
 )
 
-# iii. Decision making
+# iii. Streaming — get tokens as they arrive
+for chunk in generate("Tell me a joke.", stream=True):
+    print(chunk, end="", flush=True)
+
+# iv. Decision making
 decision = generate_decision(
     "Which is bigger?",
     options=["apple", "berry", "pumpkin"],
 )
 print(decision.selection)  # pumpkin
 print(decision.reason)     # Pumpkins are significantly larger than...
+```
+
+### Async generation (FastAPI, async frameworks)
+
+```python
+import asyncio
+from llmcall import agenerate, agenerate_decision, aextract
+
+# Async generate
+response = await agenerate("Write a story about a fictional holiday to the sun.")
+
+# Async streaming
+async for chunk in await agenerate("Tell me a joke.", stream=True):
+    print(chunk, end="", flush=True)
+
+# Async decision
+decision = await agenerate_decision("Which is bigger?", options=["apple", "berry", "pumpkin"])
+
+# Async extract
+result = await aextract(text=my_text, output_schema=MySchema)
+
+# Run concurrently
+story, decision = await asyncio.gather(
+    agenerate("Write a story."),
+    agenerate_decision("Which language?", options=["Python", "Go", "Rust"]),
+)
 ```
 
 ### Extraction
@@ -125,7 +155,8 @@ response: ResponseSchema = extract(text=text, output_schema=ResponseSchema)
 - [ ] Structured text extraction from Images
 - [ ] Structured text extraction from Office Docs e.g. Docx, Powerpoint etc.
 - [ ] Structured text extraction from Websites
-- [ ] Async support
+- [x] Async support (`agenerate`, `aextract`, `agenerate_decision`)
+- [x] Streaming support (`generate(..., stream=True)`, `agenerate(..., stream=True)`)
 
 ## Documentation
 
