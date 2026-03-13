@@ -9,7 +9,7 @@ from litellm import completion
 from litellm import supports_response_schema
 from pydantic import BaseModel
 
-from llmcall.core import config
+from llmcall.core import get_config
 
 _logger = logging.getLogger(__name__)
 
@@ -33,31 +33,36 @@ def generate(
     if not prompt:
         raise ValueError("Prompt cannot be empty.")
 
+    cfg = get_config()
+
     DEFAULT_SYSTEM_PROMPT = "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
 
     _logger.debug(f"Generating content for prompt: {prompt[:20]}..")
     start = time.perf_counter()
 
+    extra_kwargs = {}
     if output_schema:
         if not supports_response_schema(
-            model=config.model.split("/")[1], custom_llm_provider=config.model.split("/")[0]
+            model=cfg.model.split("/")[1], custom_llm_provider=cfg.model.split("/")[0]
         ):
             raise ValueError(
-                f"Response schema is not supported by the configured model: {config.model}. "
+                f"Response schema is not supported by the configured model: {cfg.model}. "
                 "Please use a different model(e.g. openai/gpt-4o-2024-08-06) or remove the output schema."
             )
-        litellm.enable_json_schema_validation = True
+        extra_kwargs["response_format"] = output_schema
+        extra_kwargs["json_schema_validation"] = True
 
     response = completion(
-        api_key=config.api_key,
-        model=config.model,
+        api_key=cfg.api_key,
+        model=cfg.model,
+        base_url=cfg.base_url,
         messages=[
             {"content": instructions or DEFAULT_SYSTEM_PROMPT, "role": "system"},
             {"content": prompt, "role": "user"},
         ],
-        response_format=output_schema,
-        **config.llm.model_dump(),
+        **cfg.llm.model_dump(),
+        **extra_kwargs,
     )
 
     _logger.debug(f"Generated content in {time.perf_counter() - start:.2f}s")
@@ -77,6 +82,8 @@ def generate_decision(
 
     if not prompt:
         raise ValueError("Prompt cannot be empty.")
+
+    cfg = get_config()
 
     DEFAULT_SYSTEM_PROMPT = """You are a specialized computer algorithm designed to make decisions in Control Flow scenarios. \
         Your task is to analyze the given context and options, then select the most appropriate option based on the context. Here is the context you need to consider: \
@@ -114,11 +121,12 @@ def generate_decision(
         ]
 
     response = completion(
-        api_key=config.api_key,
-        model=config.model,
+        api_key=cfg.api_key,
+        model=cfg.model,
+        base_url=cfg.base_url,
         messages=messages,
         response_format=Decision,
-        **config.llm.model_dump(),
+        **cfg.llm.model_dump(),
     )
 
     _logger.debug(f"Generated decision in {time.perf_counter() - start:.2f}s")

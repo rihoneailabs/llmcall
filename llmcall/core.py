@@ -15,12 +15,28 @@ class LLMConfig(BaseSettings):
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_prefix="LLMCALL_",
+        env_file=".env",
+        env_file_encoding="utf-8",
         extra="ignore",
     )
     api_key: str
     model: str = "openai/gpt-4o-2024-08-06"
+    base_url: Optional[str] = None
     debug: bool = False
     llm: ModelConfig = ModelConfig()
 
 
-config = LLMConfig()
+_config: Optional[LLMConfig] = None
+
+
+def get_config() -> LLMConfig:
+    """Return the global config, instantiating it on first call."""
+    global _config
+    if _config is None:
+        _config = LLMConfig()
+    return _config
+
+
+def config() -> LLMConfig:
+    """Alias for get_config() — kept for backwards compatibility."""
+    return get_config()
