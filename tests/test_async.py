@@ -1,8 +1,9 @@
-import pytest
 from typing import Optional
+
+import pytest
 from pydantic import BaseModel
 
-from llmcall import generate, agenerate, aextract, agenerate_decision
+from llmcall import aextract, agenerate, agenerate_decision, generate
 
 
 def test_generate_stream_raises_with_output_schema():
@@ -36,7 +37,9 @@ def test_agenerate_stream_raises_with_output_schema():
         name: str
 
     async def _run():
-        await agenerate("What is the capital of France?", output_schema=Schema, stream=True)
+        await agenerate(
+            "What is the capital of France?", output_schema=Schema, stream=True
+        )
 
     try:
         asyncio.run(_run())

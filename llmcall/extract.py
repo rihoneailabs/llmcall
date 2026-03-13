@@ -5,11 +5,11 @@ import mimetypes
 import time
 from pathlib import Path
 from typing import Optional, Union
-from typing_extensions import Annotated
 
-from litellm import completion, acompletion
+from litellm import acompletion, completion
 from litellm.utils import supports_pdf_input, supports_vision
 from pydantic import BaseModel
+from typing_extensions import Annotated
 
 from llmcall.core import get_config
 
@@ -34,6 +34,7 @@ _DEFAULT_MULTIMODAL_SYSTEM_PROMPT = (
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _source_to_data_uri(source: _Source, mime_type: str) -> str:
     """Convert a local file path or raw bytes to a base64 data URI."""
     if isinstance(source, (str, Path)):
@@ -52,7 +53,10 @@ def _is_url(source: _Source) -> bool:
 def _build_pdf_content_block(source: _Source) -> dict:
     """Build the LiteLLM file content block for a PDF source."""
     if _is_url(source):
-        return {"type": "file", "file": {"file_id": source, "format": "application/pdf"}}
+        return {
+            "type": "file",
+            "file": {"file_id": source, "format": "application/pdf"},
+        }
     data_uri = _source_to_data_uri(source, "application/pdf")
     return {"type": "file", "file": {"file_data": data_uri}}
 
@@ -66,7 +70,9 @@ def _detect_image_mime(source: _Source) -> str:
     return "image/jpeg"
 
 
-def _build_image_content_block(source: _Source, media_type: Optional[str] = None) -> dict:
+def _build_image_content_block(
+    source: _Source, media_type: Optional[str] = None
+) -> dict:
     """Build the LiteLLM image_url content block for an image source."""
     if _is_url(source):
         return {"type": "image_url", "image_url": {"url": source}}
@@ -117,10 +123,15 @@ def _parse_response(response, output_schema):
 # Text extraction (Phase 1 / 2)
 # ---------------------------------------------------------------------------
 
+
 def extract(
     text: Annotated[str, "The unstructured text to extract information from."],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> BaseModel:
     """Extract structured information from unstructured text using configured LLM."""
     if not text:
@@ -137,7 +148,10 @@ def extract(
         ]
     else:
         messages = [
-            {"content": _DEFAULT_EXTRACT_SYSTEM_PROMPT.format(text=text), "role": "system"},
+            {
+                "content": _DEFAULT_EXTRACT_SYSTEM_PROMPT.format(text=text),
+                "role": "system",
+            },
         ]
 
     response = _run_completion(cfg, messages, output_schema)
@@ -147,8 +161,12 @@ def extract(
 
 async def aextract(
     text: Annotated[str, "The unstructured text to extract information from."],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> BaseModel:
     """Async version of extract()."""
     if not text:
@@ -165,11 +183,16 @@ async def aextract(
         ]
     else:
         messages = [
-            {"content": _DEFAULT_EXTRACT_SYSTEM_PROMPT.format(text=text), "role": "system"},
+            {
+                "content": _DEFAULT_EXTRACT_SYSTEM_PROMPT.format(text=text),
+                "role": "system",
+            },
         ]
 
     response = await _run_acompletion(cfg, messages, output_schema)
-    _logger.info(f"Extraction (async) completed in {time.perf_counter() - start:.2f} seconds.")
+    _logger.info(
+        f"Extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
+    )
     return _parse_response(response, output_schema)
 
 
@@ -177,13 +200,18 @@ async def aextract(
 # PDF extraction (Phase 3)
 # ---------------------------------------------------------------------------
 
+
 def extract_pdf(
     source: Annotated[
         _Source,
         "PDF source: a URL string, a local file path (str or Path), or raw PDF bytes.",
     ],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> BaseModel:
     """Extract structured information from a PDF using the configured LLM.
 
@@ -207,21 +235,36 @@ def extract_pdf(
     system = instructions or _DEFAULT_MULTIMODAL_SYSTEM_PROMPT
     messages = [
         {"role": "system", "content": system},
-        {"role": "user", "content": [
-            {"type": "text", "text": "Extract the requested information from the PDF above."},
-            pdf_block,
-        ]},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Extract the requested information from the PDF above.",
+                },
+                pdf_block,
+            ],
+        },
     ]
 
     response = _run_completion(cfg, messages, output_schema)
-    _logger.info(f"PDF extraction completed in {time.perf_counter() - start:.2f} seconds.")
+    _logger.info(
+        f"PDF extraction completed in {time.perf_counter() - start:.2f} seconds."
+    )
     return _parse_response(response, output_schema)
 
 
 async def aextract_pdf(
-    source: Annotated[_Source, "PDF source: a URL string, a local file path (str or Path), or raw PDF bytes."],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    source: Annotated[
+        _Source,
+        "PDF source: a URL string, a local file path (str or Path), or raw PDF bytes.",
+    ],
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> BaseModel:
     """Async version of extract_pdf()."""
     cfg = get_config()
@@ -241,14 +284,22 @@ async def aextract_pdf(
     system = instructions or _DEFAULT_MULTIMODAL_SYSTEM_PROMPT
     messages = [
         {"role": "system", "content": system},
-        {"role": "user", "content": [
-            {"type": "text", "text": "Extract the requested information from the PDF above."},
-            pdf_block,
-        ]},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Extract the requested information from the PDF above.",
+                },
+                pdf_block,
+            ],
+        },
     ]
 
     response = await _run_acompletion(cfg, messages, output_schema)
-    _logger.info(f"PDF extraction (async) completed in {time.perf_counter() - start:.2f} seconds.")
+    _logger.info(
+        f"PDF extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
+    )
     return _parse_response(response, output_schema)
 
 
@@ -256,13 +307,18 @@ async def aextract_pdf(
 # Image extraction (Phase 3)
 # ---------------------------------------------------------------------------
 
+
 def extract_image(
     source: Annotated[
         _Source,
         "Image source: a URL string, a local file path (str or Path), or raw image bytes.",
     ],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
     media_type: Annotated[
         Optional[str],
         "MIME type for bytes/path input, e.g. 'image/png'. Auto-detected when omitted.",
@@ -290,21 +346,36 @@ def extract_image(
     system = instructions or _DEFAULT_MULTIMODAL_SYSTEM_PROMPT
     messages = [
         {"role": "system", "content": system},
-        {"role": "user", "content": [
-            {"type": "text", "text": "Extract the requested information from the image above."},
-            image_block,
-        ]},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Extract the requested information from the image above.",
+                },
+                image_block,
+            ],
+        },
     ]
 
     response = _run_completion(cfg, messages, output_schema)
-    _logger.info(f"Image extraction completed in {time.perf_counter() - start:.2f} seconds.")
+    _logger.info(
+        f"Image extraction completed in {time.perf_counter() - start:.2f} seconds."
+    )
     return _parse_response(response, output_schema)
 
 
 async def aextract_image(
-    source: Annotated[_Source, "Image source: a URL string, a local file path (str or Path), or raw image bytes."],
-    output_schema: Annotated[BaseModel, "The Pydantic model to use for response structure validation."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    source: Annotated[
+        _Source,
+        "Image source: a URL string, a local file path (str or Path), or raw image bytes.",
+    ],
+    output_schema: Annotated[
+        BaseModel, "The Pydantic model to use for response structure validation."
+    ],
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
     media_type: Annotated[
         Optional[str],
         "MIME type for bytes/path input, e.g. 'image/png'. Auto-detected when omitted.",
@@ -328,12 +399,20 @@ async def aextract_image(
     system = instructions or _DEFAULT_MULTIMODAL_SYSTEM_PROMPT
     messages = [
         {"role": "system", "content": system},
-        {"role": "user", "content": [
-            {"type": "text", "text": "Extract the requested information from the image above."},
-            image_block,
-        ]},
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Extract the requested information from the image above.",
+                },
+                image_block,
+            ],
+        },
     ]
 
     response = await _run_acompletion(cfg, messages, output_schema)
-    _logger.info(f"Image extraction (async) completed in {time.perf_counter() - start:.2f} seconds.")
+    _logger.info(
+        f"Image extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
+    )
     return _parse_response(response, output_schema)

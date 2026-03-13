@@ -2,11 +2,10 @@ import json
 import logging
 import time
 from typing import AsyncIterator, Iterator, Optional, Union
-from typing_extensions import Annotated
 
-from litellm import completion, acompletion
-from litellm import supports_response_schema
+from litellm import acompletion, completion, supports_response_schema
 from pydantic import BaseModel
+from typing_extensions import Annotated
 
 from llmcall.core import get_config
 
@@ -14,7 +13,9 @@ _logger = logging.getLogger(__name__)
 
 
 class Decision(BaseModel):
-    selection: Annotated[str, "The selected option - MUST be one of the provided options."]
+    selection: Annotated[
+        str, "The selected option - MUST be one of the provided options."
+    ]
     prompt: Optional[str] = None
     options: Optional[list[str]] = None
     reason: Optional[str] = None
@@ -23,9 +24,12 @@ class Decision(BaseModel):
 def generate(
     prompt: Annotated[str, "The user prompt which tells the model what to generate."],
     output_schema: Annotated[
-        Optional[BaseModel], "The Pydantic model to use for response structure validation(optional)"
+        Optional[BaseModel],
+        "The Pydantic model to use for response structure validation(optional)",
     ] = None,
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
     stream: Annotated[bool, "Stream the response token by token."] = False,
 ) -> Union[str, BaseModel, Iterator[str]]:
     """Generate content using configured LLM.
@@ -42,8 +46,10 @@ def generate(
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = "Generate content based on the following: <prompt>{prompt}</prompt>. \
+    DEFAULT_SYSTEM_PROMPT = (
+        "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
+    )
 
     _logger.debug(f"Generating content for prompt: {prompt[:20]}..")
     start = time.perf_counter()
@@ -83,7 +89,9 @@ def generate(
         return (chunk.choices[0].delta.content or "" for chunk in response)
 
     if output_schema:
-        return output_schema.model_validate(json.loads(response.choices[0].message.content), strict=True)
+        return output_schema.model_validate(
+            json.loads(response.choices[0].message.content), strict=True
+        )
 
     return response.choices[0].message.content
 
@@ -91,9 +99,12 @@ def generate(
 async def agenerate(
     prompt: Annotated[str, "The user prompt which tells the model what to generate."],
     output_schema: Annotated[
-        Optional[BaseModel], "The Pydantic model to use for response structure validation(optional)"
+        Optional[BaseModel],
+        "The Pydantic model to use for response structure validation(optional)",
     ] = None,
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
     stream: Annotated[bool, "Stream the response token by token."] = False,
 ) -> Union[str, BaseModel, AsyncIterator[str]]:
     """Async version of generate().
@@ -110,8 +121,10 @@ async def agenerate(
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = "Generate content based on the following: <prompt>{prompt}</prompt>. \
+    DEFAULT_SYSTEM_PROMPT = (
+        "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
+    )
 
     _logger.debug(f"Generating content (async) for prompt: {prompt[:20]}..")
     start = time.perf_counter()
@@ -148,13 +161,17 @@ async def agenerate(
     _logger.debug(f"Generated content (async) in {time.perf_counter() - start:.2f}s")
 
     if stream:
+
         async def _stream_chunks():
             async for chunk in response:
                 yield chunk.choices[0].delta.content or ""
+
         return _stream_chunks()
 
     if output_schema:
-        return output_schema.model_validate(json.loads(response.choices[0].message.content), strict=True)
+        return output_schema.model_validate(
+            json.loads(response.choices[0].message.content), strict=True
+        )
 
     return response.choices[0].message.content
 
@@ -162,7 +179,9 @@ async def agenerate(
 def generate_decision(
     prompt: Annotated[str, "The context to consider when making the decision."],
     options: Annotated[list[str], "List of options to choose from."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> Decision:
     """Generate a decision from a list of options."""
 
@@ -182,7 +201,9 @@ def generate_decision(
             {{OPTIONS}}
             </options>"""
 
-    _logger.debug(f"Generating decision given options: {options} and prompt: {prompt[:20]}..")
+    _logger.debug(
+        f"Generating decision given options: {options} and prompt: {prompt[:20]}.."
+    )
     start = time.perf_counter()
 
     if instructions:
@@ -221,13 +242,17 @@ def generate_decision(
     )
 
     _logger.debug(f"Generated decision in {time.perf_counter() - start:.2f}s")
-    return Decision.model_validate(json.loads(response.choices[0].message.content), strict=True)
+    return Decision.model_validate(
+        json.loads(response.choices[0].message.content), strict=True
+    )
 
 
 async def agenerate_decision(
     prompt: Annotated[str, "The context to consider when making the decision."],
     options: Annotated[list[str], "List of options to choose from."],
-    instructions: Annotated[Optional[str], "System metaprompt to condition the model."] = None,
+    instructions: Annotated[
+        Optional[str], "System metaprompt to condition the model."
+    ] = None,
 ) -> Decision:
     """Async version of generate_decision()."""
 
@@ -247,7 +272,9 @@ async def agenerate_decision(
             {{OPTIONS}}
             </options>"""
 
-    _logger.debug(f"Generating decision (async) given options: {options} and prompt: {prompt[:20]}..")
+    _logger.debug(
+        f"Generating decision (async) given options: {options} and prompt: {prompt[:20]}.."
+    )
     start = time.perf_counter()
 
     if instructions:
@@ -286,4 +313,6 @@ async def agenerate_decision(
     )
 
     _logger.debug(f"Generated decision (async) in {time.perf_counter() - start:.2f}s")
-    return Decision.model_validate(json.loads(response.choices[0].message.content), strict=True)
+    return Decision.model_validate(
+        json.loads(response.choices[0].message.content), strict=True
+    )

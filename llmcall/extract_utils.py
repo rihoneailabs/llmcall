@@ -1,4 +1,3 @@
-
 def extract_from_doc(pdf_path, page_num, pdf_type):
     """
     Extracts text from a PDF file.

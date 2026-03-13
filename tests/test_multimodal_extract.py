@@ -3,6 +3,7 @@
 Happy-path tests (live API calls) are skipped unless LLMCALL_API_KEY is set.
 All input-validation paths run without network access.
 """
+
 import asyncio
 import base64
 import os
@@ -25,10 +26,10 @@ from llmcall.extract import (
     extract_pdf,
 )
 
-
 # ---------------------------------------------------------------------------
 # Unit tests — helper functions (no network, no model needed)
 # ---------------------------------------------------------------------------
+
 
 class TestIsUrl:
     def test_http(self):
@@ -133,6 +134,7 @@ class TestDetectImageMime:
 # Input validation — model-capability checks (mocked)
 # ---------------------------------------------------------------------------
 
+
 class SimpleSchema(BaseModel):
     title: str
     summary: Optional[str] = None
@@ -140,6 +142,7 @@ class SimpleSchema(BaseModel):
 
 def _make_mock_response(schema: BaseModel):
     import json
+
     msg = MagicMock()
     msg.content = json.dumps({"title": "Test", "summary": "A summary"})
     choice = MagicMock()
@@ -170,8 +173,9 @@ class TestExtractPdfValidation:
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
 
-        with patch("llmcall.extract.supports_pdf_input", return_value=True), \
-             patch("llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)):
+        with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
+            "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
+        ):
             result = extract_pdf("https://example.com/doc.pdf", SimpleSchema)
         assert result.title == "Test"
 
@@ -180,9 +184,11 @@ class TestExtractPdfValidation:
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
 
         async def _run():
-            with patch("llmcall.extract.supports_pdf_input", return_value=True), \
-                 patch("llmcall.extract.acompletion", new_callable=AsyncMock,
-                       return_value=_make_mock_response(SimpleSchema)):
+            with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
+                "llmcall.extract.acompletion",
+                new_callable=AsyncMock,
+                return_value=_make_mock_response(SimpleSchema),
+            ):
                 return await aextract_pdf("https://example.com/doc.pdf", SimpleSchema)
 
         result = asyncio.run(_run())
@@ -210,8 +216,9 @@ class TestExtractImageValidation:
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
 
-        with patch("llmcall.extract.supports_vision", return_value=True), \
-             patch("llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)):
+        with patch("llmcall.extract.supports_vision", return_value=True), patch(
+            "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
+        ):
             result = extract_image("https://example.com/img.png", SimpleSchema)
         assert result.title == "Test"
 
@@ -220,9 +227,11 @@ class TestExtractImageValidation:
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
 
         async def _run():
-            with patch("llmcall.extract.supports_vision", return_value=True), \
-                 patch("llmcall.extract.acompletion", new_callable=AsyncMock,
-                       return_value=_make_mock_response(SimpleSchema)):
+            with patch("llmcall.extract.supports_vision", return_value=True), patch(
+                "llmcall.extract.acompletion",
+                new_callable=AsyncMock,
+                return_value=_make_mock_response(SimpleSchema),
+            ):
                 return await aextract_image("https://example.com/img.png", SimpleSchema)
 
         result = asyncio.run(_run())

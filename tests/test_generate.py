@@ -4,7 +4,6 @@ from typing import Annotated
 from litellm.exceptions import BadRequestError
 from pydantic import BaseModel
 
-
 from llmcall import generate, generate_decision
 
 os.environ["LITELLM_LOG"] = "DEBUG"
