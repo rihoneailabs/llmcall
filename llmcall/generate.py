@@ -4,7 +4,6 @@ import time
 from typing import Optional, Union
 from typing_extensions import Annotated
 
-import litellm
 from litellm import completion
 from litellm import supports_response_schema
 from pydantic import BaseModel
@@ -61,7 +60,12 @@ def generate(
             {"content": instructions or DEFAULT_SYSTEM_PROMPT, "role": "system"},
             {"content": prompt, "role": "user"},
         ],
-        **cfg.llm.model_dump(),
+        temperature=cfg.llm.temperature,
+        stream=cfg.llm.stream,
+        n=cfg.llm.n,
+        max_tokens=cfg.llm.max_tokens,
+        num_retries=cfg.llm.num_retries,
+        seed=cfg.llm.seed,
         **extra_kwargs,
     )
 
@@ -126,7 +130,12 @@ def generate_decision(
         base_url=cfg.base_url,
         messages=messages,
         response_format=Decision,
-        **cfg.llm.model_dump(),
+        temperature=cfg.llm.temperature,
+        stream=cfg.llm.stream,
+        n=cfg.llm.n,
+        max_tokens=cfg.llm.max_tokens,
+        num_retries=cfg.llm.num_retries,
+        seed=cfg.llm.seed,
     )
 
     _logger.debug(f"Generated decision in {time.perf_counter() - start:.2f}s")

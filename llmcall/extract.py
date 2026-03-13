@@ -48,7 +48,12 @@ def extract(
         base_url=cfg.base_url,
         messages=messages,
         response_format=output_schema,
-        **cfg.llm.model_dump(),
+        temperature=cfg.llm.temperature,
+        stream=cfg.llm.stream,
+        n=cfg.llm.n,
+        max_tokens=cfg.llm.max_tokens,
+        num_retries=cfg.llm.num_retries,
+        seed=cfg.llm.seed,
     )
 
     _logger.info(f"Extraction completed in {time.perf_counter() - start:.2f} seconds.")
