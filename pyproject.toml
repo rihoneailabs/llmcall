@@ -8,6 +8,7 @@ readme = "README.md"
 keywords = ["llm", "ai", "litellm", "structure-outputs", "openai", "pydantic"]
 repository = "https://github.com/rihoneailabs/llmcall.git"
 homepage = "https://github.com/rihoneailabs/llmcall"
+documentation = "https://github.com/rihoneailabs/llmcall/tree/main/docs"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -16,6 +17,10 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 
 [tool.poetry.dependencies]
