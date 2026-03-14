@@ -1,12 +1,5 @@
-"""Tests for Phase 3 multimodal extraction (PDF + Image).
-
-Happy-path tests (live API calls) are skipped unless LLMCALL_API_KEY is set.
-All input-validation paths run without network access.
-"""
-
 import asyncio
 import base64
-import os
 from pathlib import Path
 from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -25,10 +18,6 @@ from llmcall.extract import (
     extract_image,
     extract_pdf,
 )
-
-# ---------------------------------------------------------------------------
-# Unit tests — helper functions (no network, no model needed)
-# ---------------------------------------------------------------------------
 
 
 class TestIsUrl:
@@ -128,11 +117,6 @@ class TestDetectImageMime:
 
     def test_unknown_extension_fallback(self):
         assert _detect_image_mime("/tmp/image.unknownext") == "image/jpeg"
-
-
-# ---------------------------------------------------------------------------
-# Input validation — model-capability checks (mocked)
-# ---------------------------------------------------------------------------
 
 
 class SimpleSchema(BaseModel):

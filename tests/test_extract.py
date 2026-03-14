@@ -6,7 +6,8 @@ from llmcall import extract
 
 
 def test_extract_from_unstructured_text():
-    text = "We are looking for qualified Uber Drivers in Cape Town. If you are interested, please contact us at 021 123 4567. Salary is R5000 per month (negotiable)."
+    text = ("We are looking for qualified Uber Drivers in Cape Town. If you are interested, "
+            "please contact us at 021 123 4567. Salary is R5000 per month (negotiable).")
 
     class JobAd(BaseModel):
         title: str

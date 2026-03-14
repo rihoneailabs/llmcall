@@ -7,7 +7,7 @@ class ModelConfig(BaseSettings):
     temperature: float = 0.2
     stream: bool = False
     n: Optional[int] = 1
-    max_tokens: int = 1024
+    max_output_tokens: int = 4096
     num_retries: int = 3
     seed: Optional[int] = 47
 
@@ -31,7 +31,6 @@ _config: Optional[LLMConfig] = None
 
 
 def get_config() -> LLMConfig:
-    """Return the global config, instantiating it on first call."""
     global _config
     if _config is None:
         _config = LLMConfig()
@@ -39,5 +38,4 @@ def get_config() -> LLMConfig:
 
 
 def config() -> LLMConfig:
-    """Alias for get_config() — kept for backwards compatibility."""
     return get_config()

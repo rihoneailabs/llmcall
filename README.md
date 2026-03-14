@@ -4,9 +4,11 @@ A lite abstraction layer for LLM calls.
 
 ## Motivation
 
-As AI becomes more prevalent in software development, there's a growing need for simple and intuitive APIs for interacting with AI for quick text generation, decision making, and more. This is especially important now that we have structured outputs, which allow us to seamlessly integrate AI into our application flow.
+As AI becomes more prevalent in software development, there's a growing need for simple and intuitive APIs for \
+interacting with AI for quick text generation, decision making, and more. This is especially important now that we \
+have structured outputs, which allow us to seamlessly integrate AI into our application flow.
 
-`llmcall` provides a minimal, batteries-included interface for common LLM operations without unnecessary complexity.
+`llmcall` provides a minimal intelligence interface for common LLM operations without unnecessary complexity.
 
 ## Installation
 

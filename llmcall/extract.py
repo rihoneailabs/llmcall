@@ -14,8 +14,6 @@ from typing_extensions import Annotated
 from llmcall.core import get_config
 
 _logger = logging.getLogger(__name__)
-
-# Type alias for multimodal sources: URL string, local path, or raw bytes
 _Source = Union[str, Path, bytes]
 
 _DEFAULT_EXTRACT_SYSTEM_PROMPT = (
@@ -30,13 +28,7 @@ _DEFAULT_MULTIMODAL_SYSTEM_PROMPT = (
 )
 
 
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
-
 def _source_to_data_uri(source: _Source, mime_type: str) -> str:
-    """Convert a local file path or raw bytes to a base64 data URI."""
     if isinstance(source, (str, Path)):
         with open(source, "rb") as f:
             raw = f.read()
@@ -51,7 +43,6 @@ def _is_url(source: _Source) -> bool:
 
 
 def _build_pdf_content_block(source: _Source) -> dict:
-    """Build the LiteLLM file content block for a PDF source."""
     if _is_url(source):
         return {
             "type": "file",
@@ -62,7 +53,6 @@ def _build_pdf_content_block(source: _Source) -> dict:
 
 
 def _detect_image_mime(source: _Source) -> str:
-    """Best-effort MIME type detection for an image source."""
     if isinstance(source, (str, Path)):
         guessed, _ = mimetypes.guess_type(str(source))
         if guessed and guessed.startswith("image/"):
@@ -73,7 +63,6 @@ def _detect_image_mime(source: _Source) -> str:
 def _build_image_content_block(
     source: _Source, media_type: Optional[str] = None
 ) -> dict:
-    """Build the LiteLLM image_url content block for an image source."""
     if _is_url(source):
         return {"type": "image_url", "image_url": {"url": source}}
     mime = media_type or _detect_image_mime(source)
@@ -89,9 +78,9 @@ def _run_completion(cfg, messages, output_schema):
         messages=messages,
         response_format=output_schema,
         temperature=cfg.llm.temperature,
-        stream=False,  # structured extraction always needs the full response
+        stream=False,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
     )
@@ -107,7 +96,7 @@ async def _run_acompletion(cfg, messages, output_schema):
         temperature=cfg.llm.temperature,
         stream=False,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
     )
@@ -119,11 +108,6 @@ def _parse_response(response, output_schema):
     )
 
 
-# ---------------------------------------------------------------------------
-# Text extraction (Phase 1 / 2)
-# ---------------------------------------------------------------------------
-
-
 def extract(
     text: Annotated[str, "The unstructured text to extract information from."],
     output_schema: Annotated[
@@ -133,7 +117,6 @@ def extract(
         Optional[str], "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
-    """Extract structured information from unstructured text using configured LLM."""
     if not text:
         raise ValueError("Text cannot be empty.")
 
@@ -168,7 +151,6 @@ async def aextract(
         Optional[str], "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
-    """Async version of extract()."""
     if not text:
         raise ValueError("Text cannot be empty.")
 
@@ -195,10 +177,6 @@ async def aextract(
     )
     return _parse_response(response, output_schema)
 
-
-# ---------------------------------------------------------------------------
-# PDF extraction (Phase 3)
-# ---------------------------------------------------------------------------
 
 
 def extract_pdf(
@@ -266,7 +244,6 @@ async def aextract_pdf(
         Optional[str], "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
-    """Async version of extract_pdf()."""
     cfg = get_config()
     provider, model_name = cfg.model.split("/", 1)
 
@@ -301,11 +278,6 @@ async def aextract_pdf(
         f"PDF extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
     )
     return _parse_response(response, output_schema)
-
-
-# ---------------------------------------------------------------------------
-# Image extraction (Phase 3)
-# ---------------------------------------------------------------------------
 
 
 def extract_image(
@@ -381,7 +353,6 @@ async def aextract_image(
         "MIME type for bytes/path input, e.g. 'image/png'. Auto-detected when omitted.",
     ] = None,
 ) -> BaseModel:
-    """Async version of extract_image()."""
     cfg = get_config()
     provider, model_name = cfg.model.split("/", 1)
 
