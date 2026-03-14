@@ -1,6 +1,3 @@
-from typing import Optional
-
-import pytest
 from pydantic import BaseModel
 
 from llmcall import aextract, agenerate, agenerate_decision, generate

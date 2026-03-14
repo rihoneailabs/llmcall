@@ -1,12 +1,5 @@
-"""Tests for Phase 3 multimodal extraction (PDF + Image).
-
-Happy-path tests (live API calls) are skipped unless LLMCALL_API_KEY is set.
-All input-validation paths run without network access.
-"""
-
 import asyncio
 import base64
-import os
 from pathlib import Path
 from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -25,10 +18,6 @@ from llmcall.extract import (
     extract_image,
     extract_pdf,
 )
-
-# ---------------------------------------------------------------------------
-# Unit tests — helper functions (no network, no model needed)
-# ---------------------------------------------------------------------------
 
 
 class TestIsUrl:
@@ -130,11 +119,6 @@ class TestDetectImageMime:
         assert _detect_image_mime("/tmp/image.unknownext") == "image/jpeg"
 
 
-# ---------------------------------------------------------------------------
-# Input validation — model-capability checks (mocked)
-# ---------------------------------------------------------------------------
-
-
 class SimpleSchema(BaseModel):
     title: str
     summary: Optional[str] = None
@@ -171,7 +155,7 @@ class TestExtractPdfValidation:
 
     def test_succeeds_with_supported_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
-        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
             "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
@@ -181,7 +165,7 @@ class TestExtractPdfValidation:
 
     def test_async_succeeds_with_supported_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
-        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         async def _run():
             with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
@@ -214,7 +198,7 @@ class TestExtractImageValidation:
 
     def test_succeeds_with_vision_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
-        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         with patch("llmcall.extract.supports_vision", return_value=True), patch(
             "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
@@ -224,7 +208,7 @@ class TestExtractImageValidation:
 
     def test_async_succeeds_with_vision_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
-        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4o")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         async def _run():
             with patch("llmcall.extract.supports_vision", return_value=True), patch(

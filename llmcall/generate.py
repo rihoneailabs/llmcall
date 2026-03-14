@@ -46,7 +46,7 @@ def generate(
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = (
+    default_instructions = (
         "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
     )
@@ -61,7 +61,7 @@ def generate(
         ):
             raise ValueError(
                 f"Response schema is not supported by the configured model: {cfg.model}. "
-                "Please use a different model(e.g. openai/gpt-4o-2024-08-06) or remove the output schema."
+                "Please use a different model(e.g. openai/gpt-4.1) or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
         extra_kwargs["json_schema_validation"] = True
@@ -71,13 +71,13 @@ def generate(
         model=cfg.model,
         base_url=cfg.base_url,
         messages=[
-            {"content": instructions or DEFAULT_SYSTEM_PROMPT, "role": "system"},
+            {"content": instructions or default_instructions, "role": "system"},
             {"content": prompt, "role": "user"},
         ],
         temperature=cfg.llm.temperature,
         stream=stream,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
         **extra_kwargs,
@@ -121,7 +121,7 @@ async def agenerate(
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = (
+    default_instructions = (
         "Generate content based on the following: <prompt>{prompt}</prompt>. \
         Return only the content with no additional information or comments."
     )
@@ -136,7 +136,7 @@ async def agenerate(
         ):
             raise ValueError(
                 f"Response schema is not supported by the configured model: {cfg.model}. "
-                "Please use a different model(e.g. openai/gpt-4o-2024-08-06) or remove the output schema."
+                "Please use a different model(e.g. openai/gpt-4.1) or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
         extra_kwargs["json_schema_validation"] = True
@@ -146,13 +146,13 @@ async def agenerate(
         model=cfg.model,
         base_url=cfg.base_url,
         messages=[
-            {"content": instructions or DEFAULT_SYSTEM_PROMPT, "role": "system"},
+            {"content": instructions or default_instructions, "role": "system"},
             {"content": prompt, "role": "user"},
         ],
         temperature=cfg.llm.temperature,
         stream=stream,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
         **extra_kwargs,
@@ -190,8 +190,10 @@ def generate_decision(
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = """You are a specialized computer algorithm designed to make decisions in Control Flow scenarios. \
-        Your task is to analyze the given context and options, then select the most appropriate option based on the context. Here is the context you need to consider: \
+    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control Flow 
+    scenarios. \
+        Your task is to analyze the given context and options, then select the most appropriate option based on 
+        the context. Here is the context you need to consider: \
             <context>
             {{CONTEXT}}
             </context>
@@ -213,14 +215,15 @@ def generate_decision(
                 "role": "system",
             },
             {
-                "content": "Pick one of the following options: <options>{options}</options>, given the following query:\n<query>{prompt}</query>.",
+                "content": "Pick one of the following options: <options>{options}</options>, "
+                           "given the following query:\n<query>{prompt}</query>.",
                 "role": "user",
             },
         ]
     else:
         messages = [
             {
-                "content": DEFAULT_SYSTEM_PROMPT.strip()
+                "content": default_instructions.strip()
                 .replace("{{CONTEXT}}", prompt)
                 .replace("{{OPTIONS}}", "\n".join(options)),
                 "role": "user",
@@ -236,7 +239,7 @@ def generate_decision(
         temperature=cfg.llm.temperature,
         stream=cfg.llm.stream,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
     )
@@ -254,15 +257,16 @@ async def agenerate_decision(
         Optional[str], "System metaprompt to condition the model."
     ] = None,
 ) -> Decision:
-    """Async version of generate_decision()."""
 
     if not prompt:
         raise ValueError("Prompt cannot be empty.")
 
     cfg = get_config()
 
-    DEFAULT_SYSTEM_PROMPT = """You are a specialized computer algorithm designed to make decisions in Control Flow scenarios. \
-        Your task is to analyze the given context and options, then select the most appropriate option based on the context. Here is the context you need to consider: \
+    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control
+     Flow scenarios. \
+        Your task is to analyze the given context and options, then select the most appropriate option based on the 
+        context. Here is the context you need to consider: \
             <context>
             {{CONTEXT}}
             </context>
@@ -284,14 +288,15 @@ async def agenerate_decision(
                 "role": "system",
             },
             {
-                "content": "Pick one of the following options: <options>{options}</options>, given the following query:\n<query>{prompt}</query>.",
+                "content": "Pick one of the following options: <options>{options}</options>, given the "
+                           "following query:\n<query>{prompt}</query>.",
                 "role": "user",
             },
         ]
     else:
         messages = [
             {
-                "content": DEFAULT_SYSTEM_PROMPT.strip()
+                "content": default_instructions.strip()
                 .replace("{{CONTEXT}}", prompt)
                 .replace("{{OPTIONS}}", "\n".join(options)),
                 "role": "user",
@@ -307,7 +312,7 @@ async def agenerate_decision(
         temperature=cfg.llm.temperature,
         stream=cfg.llm.stream,
         n=cfg.llm.n,
-        max_tokens=cfg.llm.max_tokens,
+        max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
         seed=cfg.llm.seed,
     )

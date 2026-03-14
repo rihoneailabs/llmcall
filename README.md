@@ -4,9 +4,11 @@ A lite abstraction layer for LLM calls.
 
 ## Motivation
 
-As AI becomes more prevalent in software development, there's a growing need for simple and intuitive APIs for interacting with AI for quick text generation, decision making, and more. This is especially important now that we have structured outputs, which allow us to seamlessly integrate AI into our application flow.
+As AI becomes more prevalent in software development, there's a growing need for simple and intuitive APIs for \
+interacting with AI for quick text generation, decision making, and more. This is especially important now that we \
+have structured outputs, which allow us to seamlessly integrate AI into our application flow.
 
-`llmcall` provides a minimal, batteries-included interface for common LLM operations without unnecessary complexity.
+`llmcall` provides a minimal intelligence interface for common LLM operations without unnecessary complexity.
 
 ## Installation
 
@@ -41,7 +43,7 @@ Copy `.env.example` to `.env` and set your values:
 LLMCALL_API_KEY=sk-...
 
 # Optional (defaults shown)
-LLMCALL_MODEL=openai/gpt-4o-2024-08-06
+LLMCALL_MODEL=openai/gpt-4.1
 LLMCALL_BASE_URL=          # for Ollama, Azure, LM Studio, etc.
 LLMCALL_DEBUG=false
 ```
@@ -96,7 +98,7 @@ print(decision.selection)  # pumpkin
 print(decision.reason)     # Pumpkins are significantly larger than...
 ```
 
-### Async generation (FastAPI, async frameworks)
+### Async generation
 
 ```python
 import asyncio
@@ -172,7 +174,7 @@ with open("receipt.webp", "rb") as f:
 ```
 
 > **Model requirements:** PDF extraction requires a model with document-understanding support
-> (e.g. `anthropic/claude-3-5-sonnet-20241022`, `openai/gpt-4o`, `google/gemini-1.5-pro`).
+> (e.g. `anthropic/claude-sonnet-4-6`, `openai/gpt-4.1`, `google/gemini-3-flash-preview`).
 > Image extraction requires a vision-capable model. An informative `ValueError` is raised if
 > the configured model does not support the required capability.
 
