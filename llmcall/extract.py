@@ -193,7 +193,7 @@ def extract_pdf(
 ) -> BaseModel:
     """Extract structured information from a PDF using the configured LLM.
 
-    The model must support PDF input (e.g. claude-3-5-sonnet, gpt-4o, gemini-1.5-pro).
+    The model must support PDF input (e.g. claude-sonnet-4-6, gpt-4.1, gemini-3-flash-preview).
     Raises ValueError if the configured model does not support PDF input.
     """
     cfg = get_config()
@@ -202,8 +202,8 @@ def extract_pdf(
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"PDF input is not supported by the configured model: {cfg.model}. "
-            "Use a model that supports document understanding (e.g. anthropic/claude-3-5-sonnet-20241022, "
-            "openai/gpt-4o, google/gemini-1.5-pro)."
+            "Use a model that supports document understanding (e.g. anthropic/claude-sonnet-4-6, "
+            "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
     start = time.perf_counter()
@@ -250,8 +250,8 @@ async def aextract_pdf(
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"PDF input is not supported by the configured model: {cfg.model}. "
-            "Use a model that supports document understanding (e.g. anthropic/claude-3-5-sonnet-20241022, "
-            "openai/gpt-4o, google/gemini-1.5-pro)."
+            "Use a model that supports document understanding (e.g. anthropic/claude-sonnet-4-6, "
+            "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
     start = time.perf_counter()
@@ -298,7 +298,7 @@ def extract_image(
 ) -> BaseModel:
     """Extract structured information from an image using the configured LLM.
 
-    The model must support vision (e.g. claude-3-5-sonnet, gpt-4o, gemini-1.5-pro).
+    The model must support vision (e.g. claude-sonnet-4-6, gpt-4.1, gemini-3-flash-preview).
     Raises ValueError if the configured model does not support vision.
     """
     cfg = get_config()
@@ -307,8 +307,8 @@ def extract_image(
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"Vision/image input is not supported by the configured model: {cfg.model}. "
-            "Use a vision-capable model (e.g. anthropic/claude-3-5-sonnet-20241022, "
-            "openai/gpt-4o, google/gemini-1.5-pro)."
+            "Use a vision-capable model (e.g. anthropic/claude-sonnet-4-6, "
+            "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
     start = time.perf_counter()
@@ -359,8 +359,8 @@ async def aextract_image(
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"Vision/image input is not supported by the configured model: {cfg.model}. "
-            "Use a vision-capable model (e.g. anthropic/claude-3-5-sonnet-20241022, "
-            "openai/gpt-4o, google/gemini-1.5-pro)."
+            "Use a vision-capable model (e.g. anthropic/claude-sonnet-4-6, "
+            "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
     start = time.perf_counter()
