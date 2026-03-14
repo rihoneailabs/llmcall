@@ -192,9 +192,6 @@ def extract_pdf(
     ] = None,
 ) -> BaseModel:
     """Extract structured information from a PDF using the configured LLM.
-
-    The model must support PDF input (e.g. claude-sonnet-4-6, gpt-4.1, gemini-3-flash-preview).
-    Raises ValueError if the configured model does not support PDF input.
     """
     cfg = get_config()
     provider, model_name = cfg.model.split("/", 1)

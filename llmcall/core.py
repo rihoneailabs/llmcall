@@ -21,7 +21,7 @@ class LLMConfig(BaseSettings):
         extra="ignore",
     )
     api_key: str
-    model: str = "openai/gpt-4o-2024-08-06"
+    model: str = "openai/gpt-4.1"
     base_url: Optional[str] = None
     debug: bool = False
     llm: ModelConfig = ModelConfig()
