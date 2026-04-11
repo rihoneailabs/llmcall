@@ -1,3 +1,3 @@
 # LLM Call User Guide
 
-...WIP...
+* See [Usage Examples Notebook](./usage.ipynb) to get started quickly.
