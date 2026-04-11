@@ -206,4 +206,4 @@ invoice, receipt = await asyncio.gather(
 
 ## Documentation
 
-Please refer to our comprehensive [documentation](./docs/index.md) to learn more about this tool.
+Please refer to our comprehensive [documentation](https://github.com/rihoneailabs/llmcall/tree/main/docs) to learn more about this tool.

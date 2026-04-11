@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmcall"
-version = "0.1.0rc3"
+version = "0.1.0rc4"
 description = "A lite abstraction layer for LLM calls"
 authors = ["Ndamulelo Nemakhavhani <hello@ndamulelo.co.za>"]
 license = "Apache-2.0"
@@ -10,7 +10,7 @@ repository = "https://github.com/rihoneailabs/llmcall.git"
 homepage = "https://github.com/rihoneailabs/llmcall"
 documentation = "https://github.com/rihoneailabs/llmcall/tree/main/docs"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
@@ -25,11 +25,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.11, <4.0"
-litellm = "^1.82.2"
+litellm = ">=1.83.0, <2.0.0, !=1.82.7, !=1.82.8"
 pydantic = "^2.12.5"
 pydantic-settings = "^2.13.1"
-openai = "^2.28.0"
-environs = "^14.6.0"
 tenacity = "^9.1.4"
 
 [build-system]
@@ -39,9 +37,17 @@ build-backend = "poetry.core.masonry.api"
 [dependency-groups]
 dev = [
     "pytest (>=9.0.2,<10.0.0)",
-    "black (>=26.3.1,<27.0.0)",
-    "isort (>=8.0.1,<9.0.0)",
-    "mypy (>=1.19.1,<2.0.0)",
+    "ruff (>=0.15.0,<1.0.0)",
     "tox (>=4.49.1,<5.0.0)",
     "pytest-cov (>=7.0.0,<8.0.0)"
 ]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
