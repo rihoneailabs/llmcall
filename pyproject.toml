@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "llmcall"
-version = "0.1.0rc1"
+version = "0.1.0rc2"
 description = "A lite abstraction layer for LLM calls"
-authors = ["Ndamulelo Nemakhavhani <info@rihonegroup.com>"]
+authors = ["Ndamulelo Nemakhavhani <hello@ndamulelo.co.za>"]
 license = "Apache-2.0"
 readme = "README.md"
 keywords = ["llm", "ai", "litellm", "structure-outputs", "openai", "pydantic"]
