@@ -11,10 +11,17 @@ from litellm.utils import supports_pdf_input, supports_vision
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
-from llmcall.core import get_config
+from llmcall.core import LLMConfig, get_config
 
 _logger = logging.getLogger(__name__)
 _Source = Union[str, Path, bytes]
+
+
+def _optional_params(cfg: LLMConfig) -> dict:
+    params = {}
+    if cfg.llm.seed is not None:
+        params["seed"] = cfg.llm.seed
+    return params
 
 _DEFAULT_EXTRACT_SYSTEM_PROMPT = (
     "You are a specialist in organising unstructured data. Given the document below, "
@@ -82,7 +89,7 @@ def _run_completion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **_optional_params(cfg),
     )
 
 
@@ -98,7 +105,7 @@ async def _run_acompletion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **_optional_params(cfg),
     )
 
 
@@ -213,11 +220,11 @@ def extract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
                     "text": "Extract the requested information from the PDF above.",
                 },
-                pdf_block,
             ],
         },
     ]
@@ -261,11 +268,11 @@ async def aextract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
                     "text": "Extract the requested information from the PDF above.",
                 },
-                pdf_block,
             ],
         },
     ]
@@ -318,11 +325,11 @@ def extract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
                     "text": "Extract the requested information from the image above.",
                 },
-                image_block,
             ],
         },
     ]
@@ -370,11 +377,11 @@ async def aextract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
                     "text": "Extract the requested information from the image above.",
                 },
-                image_block,
             ],
         },
     ]

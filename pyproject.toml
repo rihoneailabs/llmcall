@@ -28,7 +28,6 @@ python = ">=3.11, <4.0"
 litellm = ">=1.83.0, <2.0.0, !=1.82.7, !=1.82.8"
 pydantic = "^2.12.5"
 pydantic-settings = "^2.13.1"
-tenacity = "^9.1.4"
 
 [build-system]
 requires = ["poetry-core"]
