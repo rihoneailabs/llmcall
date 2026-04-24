@@ -1,3 +1,5 @@
+from importlib.metadata import version
+
 from llmcall.core import LLMConfig, get_config
 from llmcall.extract import (
     aextract,
@@ -9,7 +11,10 @@ from llmcall.extract import (
 )
 from llmcall.generate import agenerate, agenerate_decision, generate, generate_decision
 
+__version__ = version("llmcall")
+
 __all__ = [
+    "__version__",
     "generate",
     "agenerate",
     "extract",

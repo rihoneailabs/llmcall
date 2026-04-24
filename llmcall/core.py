@@ -9,7 +9,7 @@ class ModelConfig(BaseSettings):
     n: Optional[int] = 1
     max_output_tokens: int = 4096
     num_retries: int = 3
-    seed: Optional[int] = 47
+    seed: Optional[int] = None
 
 
 class LLMConfig(BaseSettings):
@@ -35,7 +35,3 @@ def get_config() -> LLMConfig:
     if _config is None:
         _config = LLMConfig()
     return _config
-
-
-def config() -> LLMConfig:
-    return get_config()

@@ -1,13 +1,13 @@
 import json
 import logging
 import time
-from typing import AsyncIterator, Iterator, Optional, Union
+from typing import AsyncIterator, Iterator, Optional, Type, Union
 
 from litellm import acompletion, completion, supports_response_schema
 from pydantic import BaseModel
 from typing_extensions import Annotated
 
-from llmcall.core import get_config
+from llmcall.core import LLMConfig, get_config
 
 _logger = logging.getLogger(__name__)
 
@@ -21,11 +21,19 @@ class Decision(BaseModel):
     reason: Optional[str] = None
 
 
+def _optional_params(cfg: LLMConfig) -> dict:
+    """Return provider-optional params, omitting those not universally supported."""
+    params = {}
+    if cfg.llm.seed is not None:
+        params["seed"] = cfg.llm.seed
+    return params
+
+
 def generate(
     prompt: Annotated[str, "The user prompt which tells the model what to generate."],
     output_schema: Annotated[
-        Optional[BaseModel],
-        "The Pydantic model to use for response structure validation(optional)",
+        Optional[Type[BaseModel]],
+        "The Pydantic model class to use for response structure validation (optional).",
     ] = None,
     instructions: Annotated[
         Optional[str], "System metaprompt to condition the model."
@@ -47,21 +55,22 @@ def generate(
     cfg = get_config()
 
     default_instructions = (
-        "Generate content based on the following: <prompt>{prompt}</prompt>. \
-        Return only the content with no additional information or comments."
+        "Generate content based on the user prompt. "
+        "Return only the content with no additional information or comments."
     )
 
     _logger.debug(f"Generating content for prompt: {prompt[:20]}..")
     start = time.perf_counter()
 
-    extra_kwargs = {}
+    extra_kwargs = _optional_params(cfg)
     if output_schema:
+        provider, model_name = cfg.model.split("/", 1)
         if not supports_response_schema(
-            model=cfg.model.split("/")[1], custom_llm_provider=cfg.model.split("/")[0]
+            model=model_name, custom_llm_provider=provider
         ):
             raise ValueError(
                 f"Response schema is not supported by the configured model: {cfg.model}. "
-                "Please use a different model(e.g. openai/gpt-4.1) or remove the output schema."
+                "Please use a different model (e.g. openai/gpt-4.1) or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
         extra_kwargs["json_schema_validation"] = True
@@ -79,7 +88,6 @@ def generate(
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
         **extra_kwargs,
     )
 
@@ -99,8 +107,8 @@ def generate(
 async def agenerate(
     prompt: Annotated[str, "The user prompt which tells the model what to generate."],
     output_schema: Annotated[
-        Optional[BaseModel],
-        "The Pydantic model to use for response structure validation(optional)",
+        Optional[Type[BaseModel]],
+        "The Pydantic model class to use for response structure validation (optional).",
     ] = None,
     instructions: Annotated[
         Optional[str], "System metaprompt to condition the model."
@@ -122,21 +130,22 @@ async def agenerate(
     cfg = get_config()
 
     default_instructions = (
-        "Generate content based on the following: <prompt>{prompt}</prompt>. \
-        Return only the content with no additional information or comments."
+        "Generate content based on the user prompt. "
+        "Return only the content with no additional information or comments."
     )
 
     _logger.debug(f"Generating content (async) for prompt: {prompt[:20]}..")
     start = time.perf_counter()
 
-    extra_kwargs = {}
+    extra_kwargs = _optional_params(cfg)
     if output_schema:
+        provider, model_name = cfg.model.split("/", 1)
         if not supports_response_schema(
-            model=cfg.model.split("/")[1], custom_llm_provider=cfg.model.split("/")[0]
+            model=model_name, custom_llm_provider=provider
         ):
             raise ValueError(
                 f"Response schema is not supported by the configured model: {cfg.model}. "
-                "Please use a different model(e.g. openai/gpt-4.1) or remove the output schema."
+                "Please use a different model (e.g. openai/gpt-4.1) or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
         extra_kwargs["json_schema_validation"] = True
@@ -154,7 +163,6 @@ async def agenerate(
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
         **extra_kwargs,
     )
 
@@ -187,21 +195,29 @@ def generate_decision(
 
     if not prompt:
         raise ValueError("Prompt cannot be empty.")
+    if not options:
+        raise ValueError("Options cannot be empty.")
 
     cfg = get_config()
 
-    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control Flow 
-    scenarios. \
-        Your task is to analyze the given context and options, then select the most appropriate option based on 
-        the context. Here is the context you need to consider: \
-            <context>
-            {{CONTEXT}}
-            </context>
+    provider, model_name = cfg.model.split("/", 1)
+    if not supports_response_schema(model=model_name, custom_llm_provider=provider):
+        raise ValueError(
+            f"Response schema is not supported by the configured model: {cfg.model}. "
+            "Please use a different model (e.g. openai/gpt-4.1) or remove the output schema."
+        )
 
-        Here are the options you can choose from:
-            <options>
-            {{OPTIONS}}
-            </options>"""
+    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control Flow \
+scenarios. Your task is to analyze the given context and options, then select the most appropriate option based on \
+the context. Here is the context you need to consider:
+<context>
+{{CONTEXT}}
+</context>
+
+Here are the options you can choose from:
+<options>
+{{OPTIONS}}
+</options>"""
 
     _logger.debug(
         f"Generating decision given options: {options} and prompt: {prompt[:20]}.."
@@ -215,8 +231,11 @@ def generate_decision(
                 "role": "system",
             },
             {
-                "content": "Pick one of the following options: <options>{options}</options>, "
-                           "given the following query:\n<query>{prompt}</query>.",
+                "content": (
+                    "Pick one of the following options: "
+                    f"<options>{chr(10).join(options)}</options>, "
+                    f"given the following query:\n<query>{prompt}</query>."
+                ),
                 "role": "user",
             },
         ]
@@ -241,13 +260,19 @@ def generate_decision(
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **_optional_params(cfg),
     )
 
     _logger.debug(f"Generated decision in {time.perf_counter() - start:.2f}s")
-    return Decision.model_validate(
+    decision = Decision.model_validate(
         json.loads(response.choices[0].message.content), strict=True
     )
+    if decision.selection not in options:
+        raise ValueError(
+            f"Model returned selection {decision.selection!r} which is not one of the "
+            f"provided options: {options}"
+        )
+    return decision
 
 
 async def agenerate_decision(
@@ -260,21 +285,29 @@ async def agenerate_decision(
 
     if not prompt:
         raise ValueError("Prompt cannot be empty.")
+    if not options:
+        raise ValueError("Options cannot be empty.")
 
     cfg = get_config()
 
-    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control
-     Flow scenarios. \
-        Your task is to analyze the given context and options, then select the most appropriate option based on the 
-        context. Here is the context you need to consider: \
-            <context>
-            {{CONTEXT}}
-            </context>
+    provider, model_name = cfg.model.split("/", 1)
+    if not supports_response_schema(model=model_name, custom_llm_provider=provider):
+        raise ValueError(
+            f"Response schema is not supported by the configured model: {cfg.model}. "
+            "Please use a different model (e.g. openai/gpt-4.1) or remove the output schema."
+        )
 
-        Here are the options you can choose from:
-            <options>
-            {{OPTIONS}}
-            </options>"""
+    default_instructions = """You are a specialized computer algorithm designed to make decisions in Control Flow \
+scenarios. Your task is to analyze the given context and options, then select the most appropriate option based on \
+the context. Here is the context you need to consider:
+<context>
+{{CONTEXT}}
+</context>
+
+Here are the options you can choose from:
+<options>
+{{OPTIONS}}
+</options>"""
 
     _logger.debug(
         f"Generating decision (async) given options: {options} and prompt: {prompt[:20]}.."
@@ -288,8 +321,11 @@ async def agenerate_decision(
                 "role": "system",
             },
             {
-                "content": "Pick one of the following options: <options>{options}</options>, given the "
-                           "following query:\n<query>{prompt}</query>.",
+                "content": (
+                    "Pick one of the following options: "
+                    f"<options>{chr(10).join(options)}</options>, "
+                    f"given the following query:\n<query>{prompt}</query>."
+                ),
                 "role": "user",
             },
         ]
@@ -314,10 +350,16 @@ async def agenerate_decision(
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **_optional_params(cfg),
     )
 
     _logger.debug(f"Generated decision (async) in {time.perf_counter() - start:.2f}s")
-    return Decision.model_validate(
+    decision = Decision.model_validate(
         json.loads(response.choices[0].message.content), strict=True
     )
+    if decision.selection not in options:
+        raise ValueError(
+            f"Model returned selection {decision.selection!r} which is not one of the "
+            f"provided options: {options}"
+        )
+    return decision
