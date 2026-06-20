@@ -42,9 +42,9 @@ Copy `.env.example` to `.env` and set your values:
 # Required
 LLMCALL_API_KEY=sk-...
 
-# Optional (defaults shown)
+# Optional (defaults)
 LLMCALL_MODEL=openai/gpt-4.1
-LLMCALL_BASE_URL=          # for Ollama, Azure, LM Studio, etc.
+LLMCALL_BASE_URL=          # customise for Ollama, Azure, LM Studio, etc.
 LLMCALL_DEBUG=false
 ```
 
