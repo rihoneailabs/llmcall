@@ -12,6 +12,7 @@ Guidance for AI agents working in the `llmcall` repository — a lite abstractio
 | Tests | pytest (+ tox for the version matrix) |
 | Public API | Defined in [llmcall/__init__.py](llmcall/__init__.py) — keep `__all__` in sync |
 | Config | `LLMConfig` in [llmcall/core.py](llmcall/core.py), env prefix `LLMCALL_`, `.env` supported |
+| Release Automation | python-semantic-release (bumps version in pyproject.toml and autotit/autotags on merge to main) |
 
 ## Build and Test
 

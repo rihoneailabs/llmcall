@@ -1,5 +1,11 @@
 # LLMCall
 
+[![PyPI version](https://img.shields.io/pypi/v/llmcall.svg)](https://pypi.org/project/llmcall/)
+[![Python versions](https://img.shields.io/pypi/pyversions/llmcall.svg)](https://pypi.org/project/llmcall/)
+[![License](https://img.shields.io/pypi/l/llmcall.svg)](https://github.com/rihoneailabs/llmcall/blob/main/LICENSE)
+[![Tests](https://github.com/rihoneailabs/llmcall/actions/workflows/tests.yml/badge.svg)](https://github.com/rihoneailabs/llmcall/actions/workflows/tests.yml)
+[![Downloads](https://img.shields.io/pypi/dm/llmcall.svg)](https://pypi.org/project/llmcall/)
+
 A lite abstraction layer for LLM calls.
 
 ## Motivation
