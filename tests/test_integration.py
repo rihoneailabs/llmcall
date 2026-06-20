@@ -5,11 +5,10 @@ from pydantic import BaseModel
 
 from llmcall import extract, generate, generate_decision
 
-# Skip if no OpenAI key is set in environment/dotenv
-openai_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("LLMCALL_API_KEY")
 pytestmark = pytest.mark.skipif(
-    not openai_key,
-    reason="OPENAI_API_KEY not configured for live tests",
+    not api_key,
+    reason="LLMCALL_API_KEY not configured",
 )
 
 
@@ -20,7 +19,6 @@ class CountrySchema(BaseModel):
 
 
 def test_live_generate():
-    # Use standard models for testing response formats, e.g. openai/gpt-4o-mini
     response = generate(
         prompt="Tell me a joke about a developer and empty lists",
         instructions="Return only the joke text.",
@@ -30,7 +28,6 @@ def test_live_generate():
 
 
 def test_live_generate_with_schema():
-    # Uses real JSON structure generation
     response = generate(
         prompt="What is the capital of France and its estimated population?",
         output_schema=CountrySchema,
@@ -42,7 +39,6 @@ def test_live_generate_with_schema():
 
 
 def test_live_generate_decision():
-    # Uses real JSON structure generate_decision
     prompt = (
         "I need a database system to query structured server metrics "
         "highly performantly with SQL-like syntax. Which engine is better?"
