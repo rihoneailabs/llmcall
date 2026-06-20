@@ -4,17 +4,16 @@ import logging
 import mimetypes
 import time
 from pathlib import Path
-from typing import Optional, Union
+from typing import Annotated
 
 from litellm import acompletion, completion
 from litellm.utils import supports_pdf_input, supports_vision
 from pydantic import BaseModel
-from typing_extensions import Annotated
 
-from llmcall.core import get_config
+from llmcall.core import get_config, optional_completion_params, split_model
 
 _logger = logging.getLogger(__name__)
-_Source = Union[str, Path, bytes]
+_Source = str | Path | bytes
 
 _DEFAULT_EXTRACT_SYSTEM_PROMPT = (
     "You are a specialist in organising unstructured data. Given the document below, "
@@ -24,7 +23,8 @@ _DEFAULT_EXTRACT_SYSTEM_PROMPT = (
 
 _DEFAULT_MULTIMODAL_SYSTEM_PROMPT = (
     "You are a specialist in organising unstructured data. "
-    "Your task is to extract the requested information from the provided document as accurately as you can."
+    "Your task is to extract the requested information from the provided document "
+    "as accurately as you can."
 )
 
 
@@ -60,9 +60,7 @@ def _detect_image_mime(source: _Source) -> str:
     return "image/jpeg"
 
 
-def _build_image_content_block(
-    source: _Source, media_type: Optional[str] = None
-) -> dict:
+def _build_image_content_block(source: _Source, media_type: str | None = None) -> dict:
     if _is_url(source):
         return {"type": "image_url", "image_url": {"url": source}}
     mime = media_type or _detect_image_mime(source)
@@ -82,7 +80,7 @@ def _run_completion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **optional_completion_params(cfg),
     )
 
 
@@ -98,7 +96,7 @@ async def _run_acompletion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **optional_completion_params(cfg),
     )
 
 
@@ -114,7 +112,7 @@ def extract(
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
     if not text:
@@ -148,7 +146,7 @@ async def aextract(
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
     if not text:
@@ -178,7 +176,6 @@ async def aextract(
     return _parse_response(response, output_schema)
 
 
-
 def extract_pdf(
     source: Annotated[
         _Source,
@@ -188,18 +185,18 @@ def extract_pdf(
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
-    """Extract structured information from a PDF using the configured LLM.
-    """
+    """Extract structured information from a PDF using the configured LLM."""
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"PDF input is not supported by the configured model: {cfg.model}. "
-            "Use a model that supports document understanding (e.g. anthropic/claude-sonnet-4-6, "
+            "Use a model that supports document understanding "
+            "(e.g. anthropic/claude-sonnet-4-6, "
             "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
@@ -213,11 +210,11 @@ def extract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the PDF above.",
+                    "text": "Extract the requested information from this PDF.",
                 },
-                pdf_block,
             ],
         },
     ]
@@ -238,16 +235,17 @@ async def aextract_pdf(
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
 ) -> BaseModel:
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
             f"PDF input is not supported by the configured model: {cfg.model}. "
-            "Use a model that supports document understanding (e.g. anthropic/claude-sonnet-4-6, "
+            "Use a model that supports document understanding "
+            "(e.g. anthropic/claude-sonnet-4-6, "
             "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
 
@@ -261,49 +259,51 @@ async def aextract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the PDF above.",
+                    "text": "Extract the requested information from this PDF.",
                 },
-                pdf_block,
             ],
         },
     ]
 
     response = await _run_acompletion(cfg, messages, output_schema)
-    _logger.info(
-        f"PDF extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
-    )
+    duration = time.perf_counter() - start
+    _logger.info(f"PDF extraction (async) completed in {duration:.2f} seconds.")
     return _parse_response(response, output_schema)
 
 
 def extract_image(
     source: Annotated[
         _Source,
-        "Image source: a URL string, a local file path (str or Path), or raw image bytes.",
+        "Image source: URL string, local file path, or raw image bytes.",
     ],
     output_schema: Annotated[
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
     media_type: Annotated[
-        Optional[str],
+        str | None,
         "MIME type for bytes/path input, e.g. 'image/png'. Auto-detected when omitted.",
     ] = None,
 ) -> BaseModel:
     """Extract structured information from an image using the configured LLM.
 
-    The model must support vision (e.g. claude-sonnet-4-6, gpt-4.1, gemini-3-flash-preview).
+    The model must support vision.
+
+    Examples include claude-sonnet-4-6, gpt-4.1, and gemini-3-flash-preview.
     Raises ValueError if the configured model does not support vision.
     """
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
-            f"Vision/image input is not supported by the configured model: {cfg.model}. "
+            "Vision/image input is not supported by the configured model: "
+            f"{cfg.model}. "
             "Use a vision-capable model (e.g. anthropic/claude-sonnet-4-6, "
             "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
@@ -318,11 +318,11 @@ def extract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the image above.",
+                    "text": "Extract the requested information from this image.",
                 },
-                image_block,
             ],
         },
     ]
@@ -337,25 +337,26 @@ def extract_image(
 async def aextract_image(
     source: Annotated[
         _Source,
-        "Image source: a URL string, a local file path (str or Path), or raw image bytes.",
+        "Image source: URL string, local file path, or raw image bytes.",
     ],
     output_schema: Annotated[
         BaseModel, "The Pydantic model to use for response structure validation."
     ],
     instructions: Annotated[
-        Optional[str], "System metaprompt to condition the model."
+        str | None, "System metaprompt to condition the model."
     ] = None,
     media_type: Annotated[
-        Optional[str],
+        str | None,
         "MIME type for bytes/path input, e.g. 'image/png'. Auto-detected when omitted.",
     ] = None,
 ) -> BaseModel:
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
-            f"Vision/image input is not supported by the configured model: {cfg.model}. "
+            "Vision/image input is not supported by the configured model: "
+            f"{cfg.model}. "
             "Use a vision-capable model (e.g. anthropic/claude-sonnet-4-6, "
             "openai/gpt-4.1, google/gemini-3-flash-preview)."
         )
@@ -370,17 +371,16 @@ async def aextract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the image above.",
+                    "text": "Extract the requested information from this image.",
                 },
-                image_block,
             ],
         },
     ]
 
     response = await _run_acompletion(cfg, messages, output_schema)
-    _logger.info(
-        f"Image extraction (async) completed in {time.perf_counter() - start:.2f} seconds."
-    )
+    duration = time.perf_counter() - start
+    _logger.info(f"Image extraction (async) completed in {duration:.2f} seconds.")
     return _parse_response(response, output_schema)

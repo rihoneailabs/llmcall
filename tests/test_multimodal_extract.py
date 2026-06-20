@@ -1,7 +1,6 @@
 import asyncio
 import base64
 from pathlib import Path
-from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -121,7 +120,7 @@ class TestDetectImageMime:
 
 class SimpleSchema(BaseModel):
     title: str
-    summary: Optional[str] = None
+    summary: str | None = None
 
 
 def _make_mock_response(schema: BaseModel):
@@ -157,21 +156,46 @@ class TestExtractPdfValidation:
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
-        with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
-            "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
+        with (
+            patch("llmcall.extract.supports_pdf_input", return_value=True),
+            patch(
+                "llmcall.extract.completion",
+                return_value=_make_mock_response(SimpleSchema),
+            ),
         ):
             result = extract_pdf("https://example.com/doc.pdf", SimpleSchema)
         assert result.title == "Test"
+
+    def test_pdf_block_precedes_instruction_text(self, monkeypatch):
+        monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
+
+        with (
+            patch("llmcall.extract.supports_pdf_input", return_value=True),
+            patch(
+                "llmcall.extract.completion",
+                return_value=_make_mock_response(SimpleSchema),
+            ) as completion_mock,
+        ):
+            extract_pdf("https://example.com/doc.pdf", SimpleSchema)
+
+        content = completion_mock.call_args.kwargs["messages"][1]["content"]
+        assert content[0]["type"] == "file"
+        assert content[1]["type"] == "text"
+        assert "above" not in content[1]["text"].lower()
 
     def test_async_succeeds_with_supported_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         async def _run():
-            with patch("llmcall.extract.supports_pdf_input", return_value=True), patch(
-                "llmcall.extract.acompletion",
-                new_callable=AsyncMock,
-                return_value=_make_mock_response(SimpleSchema),
+            with (
+                patch("llmcall.extract.supports_pdf_input", return_value=True),
+                patch(
+                    "llmcall.extract.acompletion",
+                    new_callable=AsyncMock,
+                    return_value=_make_mock_response(SimpleSchema),
+                ),
             ):
                 return await aextract_pdf("https://example.com/doc.pdf", SimpleSchema)
 
@@ -200,21 +224,46 @@ class TestExtractImageValidation:
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
-        with patch("llmcall.extract.supports_vision", return_value=True), patch(
-            "llmcall.extract.completion", return_value=_make_mock_response(SimpleSchema)
+        with (
+            patch("llmcall.extract.supports_vision", return_value=True),
+            patch(
+                "llmcall.extract.completion",
+                return_value=_make_mock_response(SimpleSchema),
+            ),
         ):
             result = extract_image("https://example.com/img.png", SimpleSchema)
         assert result.title == "Test"
+
+    def test_image_block_precedes_instruction_text(self, monkeypatch):
+        monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
+        monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
+
+        with (
+            patch("llmcall.extract.supports_vision", return_value=True),
+            patch(
+                "llmcall.extract.completion",
+                return_value=_make_mock_response(SimpleSchema),
+            ) as completion_mock,
+        ):
+            extract_image("https://example.com/img.png", SimpleSchema)
+
+        content = completion_mock.call_args.kwargs["messages"][1]["content"]
+        assert content[0]["type"] == "image_url"
+        assert content[1]["type"] == "text"
+        assert "above" not in content[1]["text"].lower()
 
     def test_async_succeeds_with_vision_model(self, monkeypatch):
         monkeypatch.setenv("LLMCALL_API_KEY", "test-key")
         monkeypatch.setenv("LLMCALL_MODEL", "openai/gpt-4.1")
 
         async def _run():
-            with patch("llmcall.extract.supports_vision", return_value=True), patch(
-                "llmcall.extract.acompletion",
-                new_callable=AsyncMock,
-                return_value=_make_mock_response(SimpleSchema),
+            with (
+                patch("llmcall.extract.supports_vision", return_value=True),
+                patch(
+                    "llmcall.extract.acompletion",
+                    new_callable=AsyncMock,
+                    return_value=_make_mock_response(SimpleSchema),
+                ),
             ):
                 return await aextract_image("https://example.com/img.png", SimpleSchema)
 
