@@ -199,18 +199,11 @@ def generate_decision(
 
     cfg = get_config()
 
-    default_instructions = """You are a specialized computer algorithm designed to make
-    decisions in Control Flow scenarios. \
-        Your task is to analyze the given context and options, then select the most
-        appropriate option based on the context. Here is the context: \
-            <context>
-            {{CONTEXT}}
-            </context>
-
-        Here are the options you can choose from:
-            <options>
-            {{OPTIONS}}
-            </options>"""
+    default_system_prompt = (
+        "You are a specialized computer algorithm designed to make decisions in "
+        "Control Flow scenarios. Your task is to analyze the given context and "
+        "options, then select the most appropriate option based on the context."
+    )
 
     _logger.debug(
         f"Generating decision given options: {options} and prompt: {prompt[:20]}.."
@@ -244,11 +237,18 @@ def generate_decision(
             },
         ]
     else:
+        options_text = "\n".join(options)
+        user_content = (
+            f"Here is the context:\n<context>\n{prompt}\n</context>\n\n"
+            f"Here are the options:\n<options>\n{options_text}\n</options>"
+        )
         messages = [
             {
-                "content": default_instructions.strip()
-                .replace("{{CONTEXT}}", prompt)
-                .replace("{{OPTIONS}}", "\n".join(options)),
+                "content": default_system_prompt,
+                "role": "system",
+            },
+            {
+                "content": user_content,
                 "role": "user",
             },
         ]
@@ -291,18 +291,11 @@ async def agenerate_decision(
 
     cfg = get_config()
 
-    default_instructions = """You are a specialized computer algorithm designed to make
-    decisions in Control Flow scenarios. \
-        Your task is to analyze the given context and options, then select the most
-        appropriate option based on the context. Here is the context: \
-            <context>
-            {{CONTEXT}}
-            </context>
-
-        Here are the options you can choose from:
-            <options>
-            {{OPTIONS}}
-            </options>"""
+    default_system_prompt = (
+        "You are a specialized computer algorithm designed to make decisions in "
+        "Control Flow scenarios. Your task is to analyze the given context and "
+        "options, then select the most appropriate option based on the context."
+    )
 
     _logger.debug("Generating decision (async) for prompt: %s..", prompt[:20])
     start = time.perf_counter()
@@ -334,11 +327,18 @@ async def agenerate_decision(
             },
         ]
     else:
+        options_text = "\n".join(options)
+        user_content = (
+            f"Here is the context:\n<context>\n{prompt}\n</context>\n\n"
+            f"Here are the options:\n<options>\n{options_text}\n</options>"
+        )
         messages = [
             {
-                "content": default_instructions.strip()
-                .replace("{{CONTEXT}}", prompt)
-                .replace("{{OPTIONS}}", "\n".join(options)),
+                "content": default_system_prompt,
+                "role": "system",
+            },
+            {
+                "content": user_content,
                 "role": "user",
             },
         ]
