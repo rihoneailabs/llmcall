@@ -1,15 +1,13 @@
-from typing import Optional
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ModelConfig(BaseSettings):
     temperature: float = 0.2
     stream: bool = False
-    n: Optional[int] = 1
+    n: int | None = 1
     max_output_tokens: int = 4096
     num_retries: int = 3
-    seed: Optional[int] = 47
+    seed: int | None = 47
 
 
 class LLMConfig(BaseSettings):
@@ -22,12 +20,12 @@ class LLMConfig(BaseSettings):
     )
     api_key: str
     model: str = "openai/gpt-4.1"
-    base_url: Optional[str] = None
+    base_url: str | None = None
     debug: bool = False
     llm: ModelConfig = ModelConfig()
 
 
-_config: Optional[LLMConfig] = None
+_config: LLMConfig | None = None
 
 
 def get_config() -> LLMConfig:
