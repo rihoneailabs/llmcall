@@ -10,7 +10,7 @@ from litellm import acompletion, completion
 from litellm.utils import supports_pdf_input, supports_vision
 from pydantic import BaseModel
 
-from llmcall.core import get_config
+from llmcall.core import get_config, optional_completion_params, split_model
 
 _logger = logging.getLogger(__name__)
 _Source = str | Path | bytes
@@ -80,7 +80,7 @@ def _run_completion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **optional_completion_params(cfg),
     )
 
 
@@ -96,7 +96,7 @@ async def _run_acompletion(cfg, messages, output_schema):
         n=cfg.llm.n,
         max_tokens=cfg.llm.max_output_tokens,
         num_retries=cfg.llm.num_retries,
-        seed=cfg.llm.seed,
+        **optional_completion_params(cfg),
     )
 
 
@@ -190,7 +190,7 @@ def extract_pdf(
 ) -> BaseModel:
     """Extract structured information from a PDF using the configured LLM."""
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
@@ -210,11 +210,11 @@ def extract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the PDF above.",
+                    "text": "Extract the requested information from this PDF.",
                 },
-                pdf_block,
             ],
         },
     ]
@@ -239,7 +239,7 @@ async def aextract_pdf(
     ] = None,
 ) -> BaseModel:
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_pdf_input(model=model_name, custom_llm_provider=provider):
         raise ValueError(
@@ -259,11 +259,11 @@ async def aextract_pdf(
         {
             "role": "user",
             "content": [
+                pdf_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the PDF above.",
+                    "text": "Extract the requested information from this PDF.",
                 },
-                pdf_block,
             ],
         },
     ]
@@ -298,7 +298,7 @@ def extract_image(
     Raises ValueError if the configured model does not support vision.
     """
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
@@ -318,11 +318,11 @@ def extract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the image above.",
+                    "text": "Extract the requested information from this image.",
                 },
-                image_block,
             ],
         },
     ]
@@ -351,7 +351,7 @@ async def aextract_image(
     ] = None,
 ) -> BaseModel:
     cfg = get_config()
-    provider, model_name = cfg.model.split("/", 1)
+    provider, model_name = split_model(cfg.model)
 
     if not supports_vision(model=model_name, custom_llm_provider=provider):
         raise ValueError(
@@ -371,11 +371,11 @@ async def aextract_image(
         {
             "role": "user",
             "content": [
+                image_block,
                 {
                     "type": "text",
-                    "text": "Extract the requested information from the image above.",
+                    "text": "Extract the requested information from this image.",
                 },
-                image_block,
             ],
         },
     ]
