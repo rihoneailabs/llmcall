@@ -42,3 +42,5 @@ jobs:
 
       - name: Run tests with tox
         run: tox -e ${{ matrix.toxenv }}
+        env:
+          LLMCALL_API_KEY: ${{ secrets.LLMCALL_API_KEY }}
