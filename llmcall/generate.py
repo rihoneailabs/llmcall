@@ -4,12 +4,16 @@ import time
 from collections.abc import AsyncIterator, Iterator
 from typing import Annotated
 
+import litellm
 from litellm import acompletion, completion, supports_response_schema
 from pydantic import BaseModel
 
 from llmcall.core import get_config, optional_completion_params, split_model
 
 _logger = logging.getLogger(__name__)
+
+litellm.enable_json_schema_validation = True
+litellm.drop_params = True
 
 
 class Decision(BaseModel):
@@ -67,7 +71,6 @@ def generate(
                 "or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
-        extra_kwargs["json_schema_validation"] = True
 
     response = completion(
         api_key=cfg.api_key,
@@ -146,7 +149,6 @@ async def agenerate(
                 "or remove the output schema."
             )
         extra_kwargs["response_format"] = output_schema
-        extra_kwargs["json_schema_validation"] = True
 
     response = await acompletion(
         api_key=cfg.api_key,
