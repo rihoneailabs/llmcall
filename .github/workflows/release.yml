@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   id-token: write
+  pull-requests: write
 
 jobs:
   release:
@@ -39,34 +40,39 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Detect next version
+
+          CURRENT_VERSION=$(poetry version --short)
           NEXT_VERSION=$(poetry run semantic-release version --print 2>/dev/null || true)
+          echo "Current version: $CURRENT_VERSION"
           echo "Next version: $NEXT_VERSION"
-          
-          if [ -n "$NEXT_VERSION" ] && [ "$NEXT_VERSION" != "None" ]; then
-            # Generate local version bump and changelog locally without pushing/tagging/releasing
+
+          if [ -n "$NEXT_VERSION" ] && [ "$NEXT_VERSION" != "None" ] && [ "$NEXT_VERSION" != "$CURRENT_VERSION" ]; then
             poetry run semantic-release version --no-push --no-tag --no-vcs-release --no-commit
-            
-            # Setup bump branch
+
             BRANCH_NAME="bump/v$NEXT_VERSION"
-            git checkout -b "$BRANCH_NAME"
-            
-            # Commit the bumping changes
-            git add pyproject.toml CHANGELOG.md llmcall/__init__.py 2>/dev/null || true
-            git commit -m "chore(release): bump version to $NEXT_VERSION [skip ci]"
-            
-            # Push the bump branch to origin
+            PR_TITLE="chore(release): bump version to $NEXT_VERSION [skip ci]"
+            PR_BODY="Automated version bump to $NEXT_VERSION [skip ci]"
+
+            git checkout -B "$BRANCH_NAME"
+            git add pyproject.toml llmcall/__init__.py
+            if [ -f CHANGELOG.md ]; then
+              git add CHANGELOG.md
+            fi
+            git commit -m "$PR_TITLE"
             git push origin "$BRANCH_NAME" --force
-            
-            # Create a pull request via GitHub CLI
-            gh pr create \
-              --title "chore(release): bump version to $NEXT_VERSION [skip ci]" \
-              --body "Automated version bump to $NEXT_VERSION [skip ci]" \
-              --head "$BRANCH_NAME" \
-              --base "main" || true
-              
-            echo "released=false" >> $GITHUB_OUTPUT
+
+            PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+            if [ -n "$PR_NUMBER" ]; then
+              gh pr edit "$PR_NUMBER" --title "$PR_TITLE" --body "$PR_BODY"
+            else
+              gh pr create \
+                --title "$PR_TITLE" \
+                --body "$PR_BODY" \
+                --head "$BRANCH_NAME" \
+                --base "main"
+            fi
+
+            echo "released=true" >> $GITHUB_OUTPUT
           else
             echo "No release detected."
             echo "released=false" >> $GITHUB_OUTPUT
