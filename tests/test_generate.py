@@ -201,6 +201,46 @@ def test_async_decision_custom_instructions_interpolate_prompt_and_options(
     assert "Which is bigger?" in user_message
 
 
+def test_decision_response_format_constrains_selection_to_options(
+    mock_cfg, mock_text_response
+):
+    with (
+        patch("llmcall.generate.get_config", return_value=mock_cfg),
+        patch("llmcall.generate.supports_response_schema", return_value=True),
+        patch(
+            "llmcall.generate.completion",
+            return_value=mock_text_response('{"selection":"pumpkin"}'),
+        ) as completion_mock,
+    ):
+        generate_decision("Which is bigger?", ["apple", "pumpkin"])
+
+    response_format = completion_mock.call_args.kwargs["response_format"]
+    selection = response_format.model_json_schema()["properties"]["selection"]
+    assert selection["enum"] == ["apple", "pumpkin"]
+
+
+def test_async_decision_response_format_constrains_selection_to_options(
+    mock_cfg, mock_text_response
+):
+    async def _run():
+        with (
+            patch("llmcall.generate.get_config", return_value=mock_cfg),
+            patch("llmcall.generate.supports_response_schema", return_value=True),
+            patch(
+                "llmcall.generate.acompletion",
+                new_callable=AsyncMock,
+                return_value=mock_text_response('{"selection":"pumpkin"}'),
+            ) as completion_mock,
+        ):
+            await agenerate_decision("Which is bigger?", ["apple", "pumpkin"])
+        return completion_mock
+
+    completion_mock = asyncio.run(_run())
+    response_format = completion_mock.call_args.kwargs["response_format"]
+    selection = response_format.model_json_schema()["properties"]["selection"]
+    assert selection["enum"] == ["apple", "pumpkin"]
+
+
 def test_decision_is_in_options(mock_cfg, mock_text_response):
     prompt = "Which language is better for data science?"
     options = ["Python", "R", "Julia"]
