@@ -2,11 +2,11 @@ import json
 import logging
 import time
 from collections.abc import AsyncIterator, Iterator
-from typing import Annotated
+from typing import Annotated, Literal
 
 import litellm
 from litellm import acompletion, completion, supports_response_schema
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 from llmcall.core import get_config, optional_completion_params, split_model
 
@@ -23,6 +23,20 @@ class Decision(BaseModel):
     prompt: str | None = None
     options: list[str] | None = None
     reason: str | None = None
+
+
+def _decision_format(options: list[str]) -> type[Decision]:
+    return create_model(
+        "Decision",
+        __base__=Decision,
+        selection=(
+            Annotated[
+                Literal[tuple(options)],
+                "The selected option - MUST be one of the provided options.",
+            ],
+            ...,
+        ),
+    )
 
 
 def generate(
@@ -260,7 +274,7 @@ def generate_decision(
         model=cfg.model,
         base_url=cfg.base_url,
         messages=messages,
-        response_format=Decision,
+        response_format=_decision_format(options),
         temperature=cfg.llm.temperature,
         stream=cfg.llm.stream,
         n=cfg.llm.n,
@@ -350,7 +364,7 @@ async def agenerate_decision(
         model=cfg.model,
         base_url=cfg.base_url,
         messages=messages,
-        response_format=Decision,
+        response_format=_decision_format(options),
         temperature=cfg.llm.temperature,
         stream=cfg.llm.stream,
         n=cfg.llm.n,
