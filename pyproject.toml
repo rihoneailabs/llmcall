@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llmcall"
-version = "1.0.1"
+version = "1.0.2"
 description = "A lite abstraction layer for LLM calls"
 authors = ["Ndamulelo Nemakhavhani <hello@ndamulelo.co.za>"]
 license = "Apache-2.0"
