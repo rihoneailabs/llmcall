@@ -81,10 +81,12 @@ from pydantic import BaseModel
 # i. Basic generation
 response = generate("Write a story about a fictional holiday to the sun.")
 
+
 # ii. Structured generation
 class ResponseSchema(BaseModel):
     story: str
     tags: list[str]
+
 
 response: ResponseSchema = generate(
     "Create a rare story about the history of civilisation.",
@@ -101,7 +103,7 @@ decision = generate_decision(
     options=["apple", "berry", "pumpkin"],
 )
 print(decision.selection)  # pumpkin
-print(decision.reason)     # Pumpkins are significantly larger than...
+print(decision.reason)  # Pumpkins are significantly larger than...
 ```
 
 ### Async generation
@@ -118,7 +120,9 @@ async for chunk in await agenerate("Tell me a joke.", stream=True):
     print(chunk, end="", flush=True)
 
 # Async decision
-decision = await agenerate_decision("Which is bigger?", options=["apple", "berry", "pumpkin"])
+decision = await agenerate_decision(
+    "Which is bigger?", options=["apple", "berry", "pumpkin"]
+)
 
 # Async extract
 result = await aextract(text=my_text, output_schema=MySchema)
@@ -136,15 +140,18 @@ story, decision = await asyncio.gather(
 from llmcall import extract, extract_pdf, extract_image
 from pydantic import BaseModel
 
+
 class EmailSchema(BaseModel):
     email_subject: str
     email_body: str
     email_topic: str
     email_sentiment: str
 
+
 # i. Extract from plain text
 text = """To whom it may concern, Request for Admission at Harvard University ..."""
 result: EmailSchema = extract(text=text, output_schema=EmailSchema)
+
 
 # ii. Extract from a PDF — URL, local path, or raw bytes all work
 class InvoiceSchema(BaseModel):
@@ -152,15 +159,19 @@ class InvoiceSchema(BaseModel):
     total: float
     line_items: list[str]
 
+
 result: InvoiceSchema = extract_pdf(
     source="https://example.com/invoice.pdf",
     output_schema=InvoiceSchema,
 )
 # local file
-result: InvoiceSchema = extract_pdf(source="/path/to/invoice.pdf", output_schema=InvoiceSchema)
+result: InvoiceSchema = extract_pdf(
+    source="/path/to/invoice.pdf", output_schema=InvoiceSchema
+)
 # raw bytes
 with open("invoice.pdf", "rb") as f:
     result: InvoiceSchema = extract_pdf(source=f.read(), output_schema=InvoiceSchema)
+
 
 # iii. Extract from an image — URL, local path, or raw bytes all work
 class ReceiptSchema(BaseModel):
@@ -168,15 +179,20 @@ class ReceiptSchema(BaseModel):
     total: float
     items: list[str]
 
+
 result: ReceiptSchema = extract_image(
     source="https://example.com/receipt.jpg",
     output_schema=ReceiptSchema,
 )
 # local PNG (MIME type auto-detected from extension)
-result: ReceiptSchema = extract_image(source="/path/to/receipt.png", output_schema=ReceiptSchema)
+result: ReceiptSchema = extract_image(
+    source="/path/to/receipt.png", output_schema=ReceiptSchema
+)
 # raw bytes with explicit MIME type
 with open("receipt.webp", "rb") as f:
-    result: ReceiptSchema = extract_image(source=f.read(), output_schema=ReceiptSchema, media_type="image/webp")
+    result: ReceiptSchema = extract_image(
+        source=f.read(), output_schema=ReceiptSchema, media_type="image/webp"
+    )
 ```
 
 > **Model requirements:** PDF extraction requires a model with document-understanding support
