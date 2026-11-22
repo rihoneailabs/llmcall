@@ -4,17 +4,28 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
+    inputs:
+      force:
+        description: Open the release PR now, ignoring the two-week cadence
+        type: boolean
+        default: false
 
 permissions:
   contents: write
   pull-requests: write
 
-jobs:
-  semantic-release:
-    runs-on: ubuntu-latest
-    concurrency: semantic-release
+concurrency: semantic-release
 
+env:
+  MIN_DAYS_SINCE_LAST_RELEASE: 7
+
+jobs:
+  tag-and-release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -22,18 +33,81 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
 
+      - name: Tag merged version bump and create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+          HAS_RELEASE_PAT: ${{ secrets.RELEASE_PAT != '' }}
+        run: |
+          CURRENT_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' pyproject.toml | head -1)
+          CURRENT_TAG="v$CURRENT_VERSION"
+
+          if ! git log -1 --pretty=%B | grep -qF "chore(release): bump version to $CURRENT_VERSION"; then
+            echo "Not a release bump commit; nothing to do."
+            exit 0
+          fi
+
+          if [ -z "$(git rev-list -n 1 "$CURRENT_TAG" 2>/dev/null)" ]; then
+            git tag "$CURRENT_TAG"
+            git push origin "$CURRENT_TAG"
+          fi
+
+          if gh release view "$CURRENT_TAG" >/dev/null 2>&1; then
+            echo "Release $CURRENT_TAG already exists."
+            exit 0
+          fi
+
+          if [ "$HAS_RELEASE_PAT" = "true" ]; then
+            gh release create "$CURRENT_TAG" --verify-tag --generate-notes --title "$CURRENT_TAG"
+          else
+            gh release create "$CURRENT_TAG" --verify-tag --generate-notes --title "$CURRENT_TAG" --draft
+            echo "::warning::RELEASE_PAT is not set, so $CURRENT_TAG was created as a draft. Publish it in the GitHub UI to trigger the PyPI upload."
+          fi
+
+  open-release-pr:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Check release cadence
+        id: cadence
+        env:
+          FORCE: ${{ inputs.force || 'false' }}
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          if [ -z "$LAST_TAG" ] || [ "$FORCE" = "true" ]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          AGE_DAYS=$(( ( $(date +%s) - $(git log -1 --format=%ct "$LAST_TAG") ) / 86400 ))
+          echo "Last release $LAST_TAG was $AGE_DAYS day(s) ago."
+          if [ "$AGE_DAYS" -ge "$MIN_DAYS_SINCE_LAST_RELEASE" ]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "due=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Off-week for the release train (last release $AGE_DAYS day(s) ago); skipping."
+          fi
+
       - name: Set up Python
+        if: steps.cadence.outputs.due == 'true'
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
 
       - name: Install Poetry
+        if: steps.cadence.outputs.due == 'true'
         run: pipx install poetry
 
       - name: Install dependencies
+        if: steps.cadence.outputs.due == 'true'
         run: poetry install
 
-      - name: Run Semantic Release
+      - name: Open or update the release PR
+        if: steps.cadence.outputs.due == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT || secrets.GITHUB_TOKEN }}
         run: |
@@ -41,41 +115,29 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
           CURRENT_VERSION=$(poetry version --short)
-          CURRENT_TAG="v$CURRENT_VERSION"
-          TAG_SHA=$(git rev-list -n 1 "$CURRENT_TAG" 2>/dev/null || true)
-
-          if [ -z "$TAG_SHA" ] && git log -1 --pretty=%B | grep -q "chore(release): bump version to $CURRENT_VERSION"; then
-            git tag "$CURRENT_TAG"
-            git push origin "$CURRENT_TAG"
-            exit 0
-          fi
-
           NEXT_VERSION=$(poetry run semantic-release version --print 2>/dev/null || true)
           echo "Current version: $CURRENT_VERSION"
           echo "Next version: $NEXT_VERSION"
 
-          if [ -n "$NEXT_VERSION" ] && [ "$NEXT_VERSION" != "None" ] && [ "$NEXT_VERSION" != "$CURRENT_VERSION" ]; then
-            poetry run semantic-release version --no-push --no-tag --no-vcs-release --no-commit --no-changelog --skip-build
+          if [ -z "$NEXT_VERSION" ] || [ "$NEXT_VERSION" = "None" ] || [ "$NEXT_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "::notice::No releasable commits (feat/fix/perf/breaking) since v$CURRENT_VERSION; no release this cycle."
+            exit 0
+          fi
 
-            BRANCH_NAME="bump/v$NEXT_VERSION"
-            PR_TITLE="chore(release): bump version to $NEXT_VERSION [skip ci]"
-            PR_BODY="Automated version bump to $NEXT_VERSION [skip ci]"
+          poetry run semantic-release version --no-push --no-tag --no-vcs-release --no-commit --no-changelog --skip-build
 
-            git checkout -B "$BRANCH_NAME"
-            git add pyproject.toml
-            git commit -m "$PR_TITLE"
-            git push origin "$BRANCH_NAME" --force
+          BRANCH_NAME="bump/v$NEXT_VERSION"
+          PR_TITLE="chore(release): bump version to $NEXT_VERSION"
+          PR_BODY="Scheduled biweekly release: v$CURRENT_VERSION → v$NEXT_VERSION. Merging this PR tags v$NEXT_VERSION and creates the GitHub Release, which publishes to PyPI."
 
-            PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
-            if [ -n "$PR_NUMBER" ]; then
-              gh pr edit "$PR_NUMBER" --title "$PR_TITLE" --body "$PR_BODY"
-            else
-              gh pr create \
-                --title "$PR_TITLE" \
-                --body "$PR_BODY" \
-                --head "$BRANCH_NAME" \
-                --base "main"
-            fi
+          git checkout -B "$BRANCH_NAME"
+          git add pyproject.toml
+          git commit -m "$PR_TITLE"
+          git push origin "$BRANCH_NAME" --force
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" --title "$PR_TITLE" --body "$PR_BODY"
           else
-            echo "No release detected."
+            gh pr create --title "$PR_TITLE" --body "$PR_BODY" --head "$BRANCH_NAME" --base main
           fi
