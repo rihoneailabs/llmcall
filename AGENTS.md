@@ -37,7 +37,7 @@ Run `poetry run pytest && poetry run ruff check . && poetry run ruff format . --
 ## Testing Notes
 
 - Unit tests mock `completion`/`acompletion`; no network access required.
-- Integration tests in [tests/test_integration.py](tests/test_integration.py) are skipped unless `LLMCALL_API_KEY` is set. CI forwards `secrets.LLMCALL_API_KEY` in [.github/workflows/tests.yml](.github/workflows/tests.yml).
+- Integration tests in [tests/test_integration.py](tests/test_integration.py) are skipped unless `LLMCALL_API_KEY` is set. They run only in [.github/workflows/integration.yml](.github/workflows/integration.yml), which reports but never gates builds; [.github/workflows/tests.yml](.github/workflows/tests.yml) runs unit tests + `pip-audit` with no secrets.
 
 ## Git Workflow
 

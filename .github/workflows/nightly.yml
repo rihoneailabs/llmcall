@@ -43,6 +43,11 @@ jobs:
     needs: changes
     if: needs.changes.outputs.should_build == 'true'
     uses: ./.github/workflows/tests.yml
+
+  integration:
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
+    uses: ./.github/workflows/integration.yml
     secrets: inherit
 
   build:

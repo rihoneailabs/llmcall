@@ -41,7 +41,5 @@ jobs:
           python -m pip install .
           pip-audit
 
-      - name: Run tests with tox
-        run: tox -e ${{ matrix.toxenv }}
-        env:
-          LLMCALL_API_KEY: ${{ secrets.LLMCALL_API_KEY }}
+      - name: Run unit tests with tox
+        run: tox -e ${{ matrix.toxenv }} -- tests --ignore=tests/test_integration.py
