@@ -11,7 +11,7 @@
 
 [`nightly.yml`](../.github/workflows/nightly.yml) runs the unit test matrix and `pip-audit` (via [`tests.yml`](../.github/workflows/tests.yml)), builds the wheel and sdist, smoke-tests the wheel, and replaces the rolling `nightly` pre-release. `X.Y.Z` is the version the next release would get, so a nightly always sorts below the release it precedes.
 
-The live API tests ([`integration.yml`](../.github/workflows/integration.yml)) run alongside the build but never gate it. A revoked key or a provider outage turns that job red without blocking the nightly. The same applies on PRs: only unit tests and `pip-audit` use no secrets and decide whether a PR is green, and the live tests are a separate, non-required check.
+The live API tests ([`integration.yml`](../.github/workflows/integration.yml)) run alongside the build but never gate it. A revoked key or a provider outage turns that job red without blocking the nightly. The same applies on PRs: unit tests and `pip-audit` run without secrets and decide whether a PR is green, and the live tests are a separate, non-blocking check.
 
 If `main` hasn't changed since the last successful nightly, the run is skipped. A failed nightly doesn't move the `nightly` tag, so it is retried the next night. To build on demand, run the workflow manually with `force`.
 
