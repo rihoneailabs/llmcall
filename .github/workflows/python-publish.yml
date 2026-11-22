@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   release-build:
+    if: github.event.release.tag_name != 'nightly'
     runs-on: ubuntu-latest
 
     steps:
